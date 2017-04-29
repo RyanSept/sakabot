@@ -20,8 +20,18 @@ master_sheet = gsheet.open_by_key(
 macbook_sheet = master_sheet.get_worksheet(0)
 charger_sheet = master_sheet.get_worksheet(1)
 thunderbolt_sheet = master_sheet.get_worksheet(2)
-sheet_list.extend([macbook_sheet, charger_sheet, thunderbolt_sheet])
 
-for sheet in sheet_list:
-    selected_cells = sheet.range('C1:C8')
-    print(selected_cells)
+macbook_data = macbook_sheet.get_all_records()
+charger_data = charger_sheet.get_all_records()
+thunderbolt_data = thunderbolt_sheet.get_all_records()
+
+macbook_search_data = []
+charger_search_data = []
+thunderbolt_search_data = []
+
+
+def populate_search_data(list_of_dictionaries, search_list):
+    for records in list_of_dictionaries:
+        parsed_data = {records['Andela Code']: records['Fellow Name']}
+        search_list.append(parsed_data)
+    return search_list
