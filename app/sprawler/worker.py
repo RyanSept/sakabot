@@ -53,7 +53,7 @@ thunderbolts.create_index([('equipment_id', pymongo.TEXT)], unique=True)
 def store_in_db():
     for item in macbook_data:
         macbook = {
-        "equipment_id": item['Andela Code'].split("/")[-1],
+        "equipment_id": int(item['Andela Code'].split("/")[-1]),
         "fellow_name": item['Fellow Name'],
         "serial_no": item['Device Serial']
         }
@@ -61,7 +61,7 @@ def store_in_db():
     print "Inserted macbooks"
     for item in charger_data:
         charger = {
-        "equipment_id": item['Andela Code'].split("/")[-1],
+        "equipment_id": int(item['Andela Code'].split("/")[-1]),
         "fellow_name": item['Fellow Name']
         }
         chargers.insert_one(charger)
@@ -71,7 +71,7 @@ def store_in_db():
     for item in thunderbolt_data:
         if item['Andela Code']:
             thunderbolt = {
-            "equipment_id": item['Andela Code'].split("/")[-1],
+            "equipment_id": int(item['Andela Code'].split("/")[-1]),
             "fellow_name": item['Fellow Name']
             }
             thunderbolts.insert_one(thunderbolt)
