@@ -1,33 +1,89 @@
-from app import chargers, macbooks, thunderbolts, slack_client
+from app import chargers, macbooks, thunderbolts, lost, found, slack_client
 
 
-def get_charger(charger_id):
+def get_equipment(equipment_id, equipment_type):
     '''
-    Get charger from database using id
+    Get equipment from database
     '''
-    return chargers.find_one({"equipment_id": charger_id})
+    equipment = None
+    if equipment_type in ["mac", "tmac", "macbook"]:
+        equipment = chargers.find_one({"equipment_id": equipment_id})
+    elif equipment_type in ["charger", "charge", "procharger"]:
+        equipment = macbooks.find_one({"equipment_id": equipment_id})
+    elif equipment_type in ["tb", "thunderbolt", "thunder"]:
+        equipment = thunderbolts.find_one({"equipment_id": equipment_id})
+
+    return equipment
 
 
-def get_macbook(macbook_id):
+def add_lost_equipment(owner, equipment_lost):
     '''
-    Get charger from database using id
+    Add a lost item to the database
     '''
-    return macbooks.find_one({"equipment_id": macbook_id})
+    if not lost.find_one({"equipment": equipment_lost}):
+        slack_profile = slack_client.api_call("users.info",
+                                              user=owner)['user']["profile"]
+
+        lost_item = {
+            "equipment": equipment_lost,
+            "owner": owner,
+            "email": slack_profile["email"],
+            "name": '{} {}'.format(slack_profile["first_name"],
+                                   slack_profile["last_name"])
+        }
+        lost.insert_one(lost_item)
+        return True
+    return False
 
 
-def get_thunderbolt(thunderbolt_id):
+def add_found_equipment(submitter, equipment_found):
     '''
-    Get charger from database using id
+    Add a found item to the database
     '''
-    return thunderbolts.find_one({"equipment_id": thunderbolt_id})
+    if not found.find_one({"equipment": equipment_found}):
+        slack_profile = slack_client.api_call("users.info",
+                                              user=submitter)['user']["profile"]
+
+        found_item = {
+            "equipment": equipment_found,
+            "submitter": submitter,
+            "email": slack_profile["email"],
+            "name": '{} {}'.format(slack_profile["first_name"],
+                                   slack_profile["last_name"])
+        }
+        found.insert_one(found_item)
+        return True
+    return False
 
 
-def build_found_equipment_atachment(equipment, category):
+def remove_from_lost(equipment):
+    lost.remove({"equipment": equipment})
+
+
+def remove_from_found(equipment):
+    found.remove({"equipment": equipment})
+
+
+def search_found_equipment(equipment):
+    return found.find_one({"equipment": equipment})
+
+
+def search_lost_equipment(equipment):
+    return lost.find_one({"equipment": equipment})
+
+
+def notify_user_equipment_found(submitter, equipment_type):
+    message = "The user <@{}> found your `{}`".format(
+        submitter, equipment_type)
+    slack_client.api_call("chat.postMessage", text=message, channel=submitter)
+
+
+def build_search_reply_atachment(equipment, category):
     '''
     Returns a slack attachment to show a result
     '''
     return [{
-                "text": "That {} belongs to {}".format(category, equipment["fellow_name"]),
+        "text": "That {} belongs to {}".format(category, equipment["fellow_name"]),
                 "fallback": "Equipment ID - {} | Owner - {}".format(equipment["equipment_id"], equipment["fellow_name"]),
                 "color": "#4B719C",
                 "fields": [
@@ -41,18 +97,18 @@ def build_found_equipment_atachment(equipment, category):
                         "value": "{}".format(equipment["fellow_name"]),
                         "short": "true"
                     }
-                ]
+        ]
     }]
 
 
 loading_messages = [
     "We're testing your patience.",
-    "A few bits tried to escape, we're catching them..."
+    "A few bits tried to escape, we're catching them...",
     "It's still faster than slacking OPs :stuck_out_tongue_closed_eyes:",
     "Loading humorous message ... Please Wait",
     "Firing up the transmogrification device...",
     "Time is an illusion. Loading time doubly so.",
     "Slacking OPs for the information, this could take a while...",
     "Loading completed. Press F13 to continue.",
-    "Looks like someone's been careless again :face_with_rolling_eyes:..."
+    "Oh boy, more work! :face_with_rolling_eyes:..."
 ]

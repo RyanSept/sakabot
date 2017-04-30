@@ -11,6 +11,8 @@ db = mongodb_client[MONGODB]
 chargers = db.chargers
 macbooks = db.macbooks
 thunderbolts = db.thunderbolts
+lost = db.lost
+found = db.found
 
 # slack client
 slack_client = SlackClient(BOT_TOKEN)
