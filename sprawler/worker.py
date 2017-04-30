@@ -1,6 +1,8 @@
 import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from pymongo import MongoClient
+import pymongo
 
 sheet_list = []
 # json credentials you downloaded earlier
@@ -31,7 +33,50 @@ thunderbolt_search_data = []
 
 
 def populate_search_data(list_of_dictionaries, search_list):
+    print "Searching", macbook_data, charger_data, thunderbolt_data
     for records in list_of_dictionaries:
         parsed_data = {records['Andela Code']: records['Fellow Name']}
         search_list.append(parsed_data)
     return search_list
+
+mongodb_client = MongoClient()
+db = mongodb_client['saka']
+
+macbooks = db.macbooks
+thunderbolts = db.thunderbolts
+chargers = db.chargers
+
+macbooks.create_index([('equipment_id', pymongo.TEXT)], unique=True)
+chargers.create_index([('equipment_id', pymongo.TEXT)], unique=True)
+thunderbolts.create_index([('equipment_id', pymongo.TEXT)], unique=True)
+
+def store_in_db():
+    for item in macbook_data:
+        macbook = {
+        "equipment_id": item['Andela Code'].split("/")[-1],
+        "fellow_name": item['Fellow Name'],
+        "serial_no": item['Device Serial']
+        }
+        macbooks.insert_one(macbook)
+    print "Inserted macbooks"
+    for item in charger_data:
+        charger = {
+        "equipment_id": item['Andela Code'].split("/")[-1],
+        "fellow_name": item['Fellow Name']
+        }
+        chargers.insert_one(charger)
+
+    print "Inserted chargers"
+
+    for item in thunderbolt_data:
+        if item['Andela Code']:
+            thunderbolt = {
+            "equipment_id": item['Andela Code'].split("/")[-1],
+            "fellow_name": item['Fellow Name']
+            }
+            thunderbolts.insert_one(thunderbolt)
+
+    print "Inserted thunderbolts"
+
+if __name__ == "__main__":
+    store_in_db()
