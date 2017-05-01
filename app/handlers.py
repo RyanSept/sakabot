@@ -4,7 +4,7 @@ import random
 import time
 import json
 from slackbot.bot import respond_to
-from app.core import get_equipment, loading_messages, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_user_equipment_found, remove_from_found
+from app.core import get_equipment, loading_messages, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_user_equipment_found, remove_from_found, get_help_message
 
 
 @respond_to('hello$|hi$|hey$|aloha$|bonjour$', re.IGNORECASE)
@@ -140,3 +140,8 @@ def submit_found(message, equipment_type, equipment_id):
         time.sleep(1)
         message.reply("That item doesn't exist in our database "
                       "and thus can't be reported as found.")
+
+
+@respond_to('help$|assist$', re.IGNORECASE)
+def help(message):
+    message.send_webapi('', get_help_message())

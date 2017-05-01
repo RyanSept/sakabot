@@ -101,6 +101,42 @@ def build_search_reply_atachment(equipment, category):
     }]
 
 
+def get_help_message():
+    return [
+        {
+            "text": "Sakabot helps you search, find or report a lost item "
+            "whether it be your macbook, thunderbolt or charger.\n *USAGE*",
+            "color": "#4B719C",
+            "mrkdwn_in": ["fields"],
+            "fields": [
+                {
+                    "title": "Searching for an items' owner",
+                    "value": "To search for an item's owner send "
+                    "`find charger|mac|thunderbolt <item_id>` "
+                    "to _@sakabot_.\n eg. `find charger 41`"
+                },
+                {
+                    "title": "Reporting that you've lost an item",
+                    "value": "When you lose an item, there's a chance that "
+                    "somebody has found it and submitted it to Sakabot. "
+                    "In that case we'll tell you who found it, otherwise, "
+                    "we'll slack you in case anyone reports they found it. To "
+                    "report an item as lost send `lost charger|mac|thunderbolt <item_id>` to _@sakabot._"
+                    "\n eg. `lost thunderbolt 33`"
+                },
+                {
+                    "title": "Submit a found item",
+                    "value": "When you find a lost item you can report that "
+                    "you found it and in case a user had reported it lost, "
+                    "we'll slack them immediately telling them you found it. "
+                    "To report that you found an item send `found charger|mac|thunderbolt <item_id>` to _@sakabot_"
+                    "\n eg. `lost mac 67`"
+                }
+            ],
+        }
+    ]
+
+
 loading_messages = [
     "We're testing your patience.",
     "A few bits tried to escape, we're catching them...",
