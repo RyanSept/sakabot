@@ -1,11 +1,9 @@
 from pymongo import MongoClient
 from slackclient import SlackClient
-from app.config import MONGODB, BOT_TOKEN
-import pymongo
+from app.config import MONGODB_URI, BOT_TOKEN
 
-
-mongodb_client = MongoClient()
-db = mongodb_client[MONGODB]
+mongodb_client = MongoClient(MONGODB_URI)
+db = mongodb_client["saka"]
 
 # db collection
 chargers = db.chargers

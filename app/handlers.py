@@ -45,7 +45,7 @@ def find_equipment(message, command, equipment_type, equipment_id):
     if equipment:
         attachments.extend(
             build_search_reply_atachment(equipment,
-                                            "item"))
+                                         "item"))
         time.sleep(1)
         print attachments
         message.send_webapi('', json.dumps(attachments))
