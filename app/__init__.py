@@ -3,7 +3,7 @@ from slackclient import SlackClient
 from app.config import MONGODB_URI, BOT_TOKEN
 
 mongodb_client = MongoClient(MONGODB_URI)
-db = mongodb_client["saka"]
+db = mongodb_client.get_default_database()
 
 # db collection
 chargers = db.chargers
