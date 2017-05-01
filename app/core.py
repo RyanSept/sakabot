@@ -107,7 +107,7 @@ def get_help_message():
             "text": "Sakabot helps you search, find or report a lost item "
             "whether it be your macbook, thunderbolt or charger.\n *USAGE*",
             "color": "#4B719C",
-            "mrkdwn_in": ["fields"],
+            "mrkdwn_in": ["fields", "text"],
             "fields": [
                 {
                     "title": "Searching for an items' owner",
