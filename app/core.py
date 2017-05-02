@@ -72,10 +72,10 @@ def search_lost_equipment(equipment):
     return lost.find_one({"equipment": equipment})
 
 
-def notify_user_equipment_found(submitter, equipment_type):
+def notify_user_equipment_found(submitter, owner, equipment_type):
     message = "The user <@{}> found your `{}`".format(
         submitter, equipment_type)
-    slack_client.api_call("chat.postMessage", text=message, channel=submitter)
+    slack_client.api_call("chat.postMessage", text=message, channel=owner)
 
 
 def build_search_reply_atachment(equipment, category):
@@ -130,7 +130,7 @@ def get_help_message():
                     "you found it and in case a user had reported it lost, "
                     "we'll slack them immediately telling them you found it. "
                     "To report that you found an item send `found charger|mac|thunderbolt <item_id>` to _@sakabot_"
-                    "\n eg. `lost mac 67`"
+                    "\n eg. `find mac 67`"
                 }
             ],
         }

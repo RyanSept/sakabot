@@ -109,18 +109,18 @@ def submit_found(message, equipment_type, equipment_id):
     if equipment:
         submitter = message.body['user']
         # check if item is in lost collection
-        equipment_in_lost = search_lost_equipment(equipment)
+        lost_equipment = search_lost_equipment(equipment)
 
-        if equipment_in_lost:
+        if lost_equipment:
             time.sleep(1)
-            notify_user_equipment_found(submitter, equipment_type)
+            notify_user_equipment_found(submitter, lost_equipment['owner'], equipment_type)
             message.reply("Woohoo!:tada: We've notified the owner <@{}> "
                           "that you found their {}.\nI would pat your "
                           "back if I had any hands."
-                          " Keep being awesome :clap:".format(equipment_in_lost["owner"],
+                          " Keep being awesome :clap:".format(lost_equipment["owner"],
                                                               equipment_type)
                           )
-            remove_from_lost(equipment_in_lost)
+            remove_from_lost(lost_equipment)
         else:
             if add_found_equipment(submitter, equipment):
                 time.sleep(1)
