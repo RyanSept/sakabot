@@ -110,7 +110,7 @@ def get_help_message():
             "mrkdwn_in": ["fields", "text"],
             "fields": [
                 {
-                    "title": "Searching for an items' owner",
+                    "title": "Searching for an item's owner",
                     "value": "To search for an item's owner send "
                     "`find charger|mac|thunderbolt <item_id>` "
                     "to _@sakabot_.\n eg. `find charger 41`"
@@ -130,7 +130,7 @@ def get_help_message():
                     "you found it and in case a user had reported it lost, "
                     "we'll slack them immediately telling them you found it. "
                     "To report that you found an item send `found charger|mac|thunderbolt <item_id>` to _@sakabot_"
-                    "\n eg. `find mac 67`"
+                    "\n eg. `found mac 67`"
                 }
             ],
         }
