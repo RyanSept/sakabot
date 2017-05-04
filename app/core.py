@@ -57,11 +57,11 @@ def add_found_equipment(submitter, equipment_found):
 
 
 def remove_from_lost(equipment):
-    lost.remove({"equipment": equipment})
+    lost.delete_one({"equipment": equipment})
 
 
 def remove_from_found(equipment):
-    found.remove({"equipment": equipment})
+    found.delete_one({"equipment": equipment})
 
 
 def search_found_equipment(equipment):

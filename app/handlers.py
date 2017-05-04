@@ -76,7 +76,7 @@ def report_lost(message, equipment_type, equipment_id):
                           "We're marking this item as found.".format(
                               found_equipment['submitter'],
                               equipment_type))
-            remove_from_found(found_equipment)
+            remove_from_found(equipment)
             return
         else:
             if add_lost_equipment(owner, equipment):
@@ -87,8 +87,8 @@ def report_lost(message, equipment_type, equipment_id):
                                                              equipment_id))
             else:
                 time.sleep(1)
-                message.reply("The item `{0}-{1}` is already in our "
-                              "database. Send `found {0} {1}` "
+                message.reply("The item `{0}-{1}` has already been reported "
+                              "lost. Send `found {0} {1}` "
                               "if you meant to report you found it.".format(
                                   equipment_type,
                                   equipment_id))
@@ -120,7 +120,7 @@ def submit_found(message, equipment_type, equipment_id):
                           " Keep being awesome :clap:".format(lost_equipment["owner"],
                                                               equipment_type)
                           )
-            remove_from_lost(lost_equipment)
+            remove_from_lost(equipment)
         else:
             if add_found_equipment(submitter, equipment):
                 time.sleep(1)
@@ -130,8 +130,8 @@ def submit_found(message, equipment_type, equipment_id):
                                                                 equipment_id))
             else:
                 time.sleep(1)
-                message.reply("The item `{0}-{1}` is already in our "
-                              "database. Send `lost {0} {1}` "
+                message.reply("The item `{0}-{1}` has already been reported"
+                              " found. Send `lost {0} {1}` "
                               "if you meant to report you lost it.".format(
                                   equipment_type,
                                   equipment_id))
