@@ -10,8 +10,11 @@ You'll need a slack api bot token https://api.slack.com/bot-users.
 
 ### Installing
 Clone the repo from Github by running  `$ git clone git@github.com:RyanSept/sakabot.git`
+
 Change directory into package `$ cd sakabot`
+
 Install the dependencies by running `$ pip install requirements.txt`
+
 You can set the required environment variables like so
 
 ```
@@ -28,17 +31,14 @@ To deploy on heroku, you need to push setup the app on heroku, add the appropria
 mongodb and scale the dyno `heroku ps:scale worker=1`
 
 ### Usage
-Searching for an item's owner
-----------------
+*Searching for an item's owner*
 To search for an item's owner send `find charger|mac|thunderbolt <item_id>` to _@sakabot_.
 eg. `find charger 41`
 
-Reporting that you've lost an item
-----------------
+*Reporting that you've lost an item*
 When you lose an item, there's a chance that somebody has found it and submitted it to Sakabot. In that case we'll tell you who found it, otherwise, we'll slack you in case anyone reports they found it. To report an item as lost send `lost charger|mac|thunderbolt <item_id>` to _@sakabot._
 eg. `lost thunderbolt 33`
 
-Submit a found item
-----------------
+*Submit a found item*
 When you find a lost item you can report that you found it and in case a user had reported it lost, we'll slack them immediately telling them you found it. To report that you found an item send `found charger|mac|thunderbolt <item_id>` to _@sakabot_
 eg. `found mac 67`
