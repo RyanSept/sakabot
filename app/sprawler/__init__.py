@@ -1,19 +1,6 @@
 import os
-from pymongo import MongoClient
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
-
-# Despite db being init in app.init we reinit here to avoid writing to
-# prod db. Could be better to have it config based
-
-mongodb_client = MongoClient()
-db = mongodb_client['saka']
-
-
-macbooks = db.macbooks
-thunderbolts = db.thunderbolts
-chargers = db.chargers
 
 
 # json credentials you downloaded earlier

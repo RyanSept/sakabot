@@ -1,8 +1,8 @@
 import os
 import json
 from fuzzywuzzy import fuzz
-from app.sprawler import gsheet, db, macbooks, chargers, thunderbolts, SPREADSHEET_ID
-
+from app.sprawler import gsheet, SPREADSHEET_ID
+from app import macbooks, chargers, thunderbolts
 
 REL_PATH = '/emails.json'
 HOME_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -7,9 +7,9 @@ def get_equipment(equipment_id, equipment_type):
     '''
     equipment = None
     if equipment_type in ["mac", "tmac", "macbook"]:
-        equipment = chargers.find_one({"equipment_id": equipment_id})
-    elif equipment_type in ["charger", "charge", "procharger"]:
         equipment = macbooks.find_one({"equipment_id": equipment_id})
+    elif equipment_type in ["charger", "charge", "procharger"]:
+        equipment = chargers.find_one({"equipment_id": equipment_id})
     elif equipment_type in ["tb", "thunderbolt", "thunder"]:
         equipment = thunderbolts.find_one({"equipment_id": equipment_id})
 
@@ -83,8 +83,8 @@ def build_search_reply_atachment(equipment, category):
     Returns a slack attachment to show a result
     '''
     return [{
-        "text": "That {} belongs to {}".format(category, equipment["fellow_name"]),
-                "fallback": "Equipment ID - {} | Owner - {}".format(equipment["equipment_id"], equipment["fellow_name"]),
+        "text": "That {} belongs to {}".format(category, equipment["owner_name"]),
+                "fallback": "Equipment ID - {} | Owner - {}".format(equipment["equipment_id"], equipment["owner_name"]),
                 "color": "#4B719C",
                 "fields": [
                     {
@@ -94,7 +94,7 @@ def build_search_reply_atachment(equipment, category):
                     },
                     {
                         "title": "Owner",
-                        "value": "{}".format(equipment["fellow_name"]),
+                        "value": "{}".format(equipment["owner_name"]),
                         "short": "true"
                     }
         ]
