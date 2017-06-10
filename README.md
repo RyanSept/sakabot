@@ -24,7 +24,10 @@ $ export ERRORS_TO=<SLACK_USER_TO_SEND_ERRORS_TO>
 ```
 
 Before running you need to setup the database and populate it by running the sprawler on the OPs spreadsheet with your email credentials
-on it.
+on it. To run the sprawler, you need credentials. To get these, you need to setup a project on the Google Developers Console. 
+Follow this guide https://developers.google.com/sheets/api/quickstart/python and copy the credentials file you download 
+to app/sprawler/credentials as sakabot-cred.json. Copy the client email value in the credentials file you got and share 
+the spreadsheet with that email.
 
 ### Deployment
 To deploy on heroku, you need to push setup the app on heroku, add the appropriate configs(see installing section), set up a

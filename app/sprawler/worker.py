@@ -1,82 +1,90 @@
 import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from pymongo import MongoClient
-import pymongo
-
-sheet_list = []
-# json credentials you downloaded earlier
-rel_path = '/credentials/sakabot-cred.json'
-home_dir = os.path.dirname(os.path.abspath(__file__))
-CLIENT_SECRET_FILE = home_dir + rel_path
-SCOPE = ['https://spreadsheets.google.com/feeds']
-
-# get email and key from creds
-cred = ServiceAccountCredentials.from_json_keyfile_name(CLIENT_SECRET_FILE,
-                                                        SCOPE)
-
-gsheet = gspread.authorize(cred)  # authenticate with Google
-master_sheet = gsheet.open_by_key(
-    "1lJ4VUcP1t7kXZNtdVBlfgNDpXVrg--vSlA0iL7H5b4E")  # open sheet
-
-macbook_sheet = master_sheet.get_worksheet(0)
-charger_sheet = master_sheet.get_worksheet(1)
-thunderbolt_sheet = master_sheet.get_worksheet(2)
-
-macbook_data = macbook_sheet.get_all_records()
-charger_data = charger_sheet.get_all_records()
-thunderbolt_data = thunderbolt_sheet.get_all_records()
-
-macbook_search_data = []
-charger_search_data = []
-thunderbolt_search_data = []
+from app.sprawler import gsheet, macbooks, chargers, thunderbolts, SPREADSHEET_ID
 
 
-def populate_search_data(list_of_dictionaries, search_list):
-    print "Searching", macbook_data, charger_data, thunderbolt_data
-    for records in list_of_dictionaries:
-        parsed_data = {records['Andela Code']: records['Fellow Name']}
-        search_list.append(parsed_data)
-    return search_list
+def retrieve_data_from_spreadsheet():
+    master_sheet = gsheet.open_by_key(SPREADSHEET_ID)  # open sheet
 
-mongodb_client = MongoClient()
-db = mongodb_client['saka']
+    # get respective sheets
+    macbook_sheet = master_sheet.get_worksheet(0)
+    charger_sheet = master_sheet.get_worksheet(1)
+    thunderbolt_sheet = master_sheet.get_worksheet(2)
 
-macbooks = db.macbooks
-thunderbolts = db.thunderbolts
-chargers = db.chargers
+    # take the relevant rows from each sheet
+    macbook_data = macbook_sheet.range("C4:E" + str(macbook_sheet.row_count))
+    charger_data = charger_sheet.range("B4:C" + str(charger_sheet.row_count))
+    thunderbolt_data = thunderbolt_sheet.range(
+        "B4:C" + str(thunderbolt_sheet.row_count))
 
-macbooks.create_index([('equipment_id', pymongo.TEXT)], unique=True)
-chargers.create_index([('equipment_id', pymongo.TEXT)], unique=True)
-thunderbolts.create_index([('equipment_id', pymongo.TEXT)], unique=True)
+    return {
+        "macbook": format_data(macbook_data, "macbook"),
+        "charger": format_data(charger_data, "charger"),
+        "thunderbolt": format_data(thunderbolt_data, "thunderbolt")
+    }
 
-def store_in_db():
-    for item in macbook_data:
-        macbook = {
-        "equipment_id": int(item['Andela Code'].split("/")[-1]),
-        "fellow_name": item['Fellow Name'],
-        "serial_no": item['Device Serial']
-        }
-        macbooks.insert_one(macbook)
-    print "Inserted macbooks"
-    for item in charger_data:
-        charger = {
-        "equipment_id": int(item['Andela Code'].split("/")[-1]),
-        "fellow_name": item['Fellow Name']
-        }
-        chargers.insert_one(charger)
 
-    print "Inserted chargers"
+def format_data(sheet_data, sheet_name):
+    '''
+    Format the data gotten from the spreadsheet
+    '''
+    # number of columns of data we got from each sheet
+    chunks = {"macbook": 3, "charger": 2, "thunderbolt": 2}
+    new_data = []
+    if sheet_name not in chunks:
+        raise ValueError
+        return
 
-    for item in thunderbolt_data:
-        if item['Andela Code']:
-            thunderbolt = {
-            "equipment_id": int(item['Andela Code'].split("/")[-1]),
-            "fellow_name": item['Fellow Name']
+    for indx in xrange(0, len(sheet_data), chunks[sheet_name]):
+        row = sheet_data[indx:indx + chunks[sheet_name]]
+
+        # if the column is empty go to the next item in list
+        if not row[0].value:
+            continue
+
+        if sheet_name == "macbook":
+            equipment = {
+                "equipment_id": row[0].value.strip(),
+                "serial_no": row[1].value,
+                "owner_name": row[2].value.strip()
             }
-            thunderbolts.insert_one(thunderbolt)
+        else:
+            equipment = {
+                "equipment_id": row[0].value.strip(),
+                "owner_name": row[1].value.strip()
+            }
 
-    print "Inserted thunderbolts"
+        new_data.append(equipment)
+
+    return new_data
+
+
+# drop that db down low
+macbooks.drop()
+chargers.drop()
+thunderbolts.drop()
+
+
+def store_in_db(collection_name, data):
+    '''
+    Store data in specified db
+    '''
+    collections = {
+        "macbook": macbooks,
+        "charger": chargers,
+        "thunderbolt": thunderbolts
+    }
+    if collection_name not in collections:
+        raise ValueError
+        return
+
+    collection = collections[collection_name]
+    collection.insert_many(data)
+    print "Inserted {}".format(collection)
+
 
 if __name__ == "__main__":
-    store_in_db()
+    data = retrieve_data_from_spreadsheet()
+    for key in data:
+        print data[key]
+        store_in_db(key, data[key])
+    print "Om nom nom nom"

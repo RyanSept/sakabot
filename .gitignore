@@ -1,4 +1,6 @@
 credentials
+List of all emails
+emails.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -84,6 +86,3 @@ celerybeat-schedule
 venv/
 ENV/
 .DS_Store
-
-# Authentication Tokens
-*.json
