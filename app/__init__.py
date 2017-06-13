@@ -11,6 +11,7 @@ macbooks = db.macbooks
 thunderbolts = db.thunderbolts
 lost = db.lost
 found = db.found
+slack_handles = db.slack_handles
 
 # slack client
 slack_client = SlackClient(BOT_TOKEN)

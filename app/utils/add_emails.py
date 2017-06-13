@@ -1,7 +1,7 @@
 import os
 import json
 from fuzzywuzzy import fuzz
-from app.sprawler import gsheet, SPREADSHEET_ID
+from app.utils import gsheet, SPREADSHEET_ID
 from app import macbooks, chargers, thunderbolts
 
 REL_PATH = '/emails.json'
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     print "THUNDERBOLTS"
     add_emails_to_db(thunderbolts)
     add_emails_to_sheet(master_sheet.get_worksheet(0),
-                        6, macbooks.find())  
+                        6, macbooks.find())
 
     add_emails_to_sheet(master_sheet.get_worksheet(1), 4, chargers.find())
     add_emails_to_sheet(master_sheet.get_worksheet(2), 4, thunderbolts.find())

@@ -1,4 +1,5 @@
-from app.sprawler import gsheet, SPREADSHEET_ID
+from app.utils import gsheet, SPREADSHEET_ID
+from app.utils.get_slack_handles import get_slack_handles
 from app import macbooks, chargers, thunderbolts
 
 
@@ -81,12 +82,15 @@ def store_in_db(collection_name, data):
     # drop that db down low
     collection.drop()
     collection.insert_many(data)
-    print "Inserted {}".format(collection)
 
 
 if __name__ == "__main__":
     data = retrieve_data_from_spreadsheet()
     for key in data:
-        print data[key]
         store_in_db(key, data[key])
-    print "Om nom nom nom..."
+        print "Added data to {} collection".format(key)
+        print "-" * 60
+        get_slack_handles(data[key])
+        print "Retrieved slack handles for {} ".format(key)
+        print "-" * 60
+    print "Om nom nom nom... Done"
