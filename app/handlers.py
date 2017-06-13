@@ -5,6 +5,10 @@ import time
 import json
 from slackbot.bot import respond_to
 from app.core import get_equipment, loading_messages, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_user_equipment_found, remove_from_found, get_help_message
+from app.config import HOME_DIR
+
+
+loading_messages = json.loads(open(HOME_DIR + "/utils/fortunes.json", "r").read())
 
 
 @respond_to('hello$|hi$|hey$|aloha$|bonjour$', re.IGNORECASE)
@@ -33,7 +37,7 @@ def gratitude_reply(message):
 @respond_to("(find|get|search|retrieve) (mac|tmac|macbook|charger|charge|procharger|tb|thunderbolt|thunder).*?(\d+)", re.IGNORECASE)
 def find_equipment(message, command, equipment_type, equipment_id):
     time.sleep(1)
-    message.reply(random.choice(loading_messages))
+    message.reply(random.choice(loading_messages)["quote"])
     time.sleep(2)
 
     attachments = []
