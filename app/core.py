@@ -1,9 +1,17 @@
-from app import chargers, macbooks, thunderbolts, lost, found, slack_client
+import re
+from app import chargers, macbooks, thunderbolts, lost, found, slack_client, slack_handles
 
+
+def extract_id_from_slack_handle(slack_handle):
+    '''
+    Remove slack formatting of handle eg. <@U328FG73> => U328FG73
+    '''
+    match = re.findall("<@(.*)>", slack_handle)
+    return match[0] if match else slack_handle
 
 def get_equipment(equipment_id, equipment_type):
     '''
-    Get equipment from database
+    Get equipment from database by id
     '''
     equipment = None
     if equipment_type in ["mac", "tmac", "macbook"]:
@@ -13,6 +21,25 @@ def get_equipment(equipment_id, equipment_type):
     elif equipment_type in ["tb", "thunderbolt", "thunder"]:
         equipment = thunderbolts.find_one({"equipment_id": equipment_id})
 
+    return equipment
+
+
+def get_equipment_by_slack_id(slack_id, equipment_type):
+    '''
+    Get equipment by slack_id
+    '''
+    equipment = None
+    equipment_types = {
+        "macbook": macbooks,
+        "charger": chargers,
+        "thunderbolt": thunderbolts
+    }
+
+    collection = equipment_types[equipment_type]
+    email = slack_handles.find_one({"slack_id": slack_id})
+    if email is not None:
+        email = email["email"]
+        equipment = collection.find({"owner_email": email})
     return equipment
 
 

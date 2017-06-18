@@ -71,7 +71,7 @@ def add_emails_to_sheet(sheet, col, equipments):
     Add emails to spreadsheet
     Takes the sheet and the column to add the emails to
     '''
-    # loop through equipment
+    # loop through equipment db
     for equipment in equipments:
         email = equipment["owner_email"]
 
@@ -89,8 +89,7 @@ if __name__ == "__main__":
     add_emails_to_db(chargers)
     print "THUNDERBOLTS"
     add_emails_to_db(thunderbolts)
-    add_emails_to_sheet(master_sheet.get_worksheet(0),
-                        6, macbooks.find())
 
+    add_emails_to_sheet(master_sheet.get_worksheet(0), 6, macbooks.find())
     add_emails_to_sheet(master_sheet.get_worksheet(1), 4, chargers.find())
     add_emails_to_sheet(master_sheet.get_worksheet(2), 4, thunderbolts.find())
