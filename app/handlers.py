@@ -12,9 +12,12 @@ loading_messages = json.loads(
     open(HOME_DIR + "/utils/fortunes.json", "r").read())
 
 EQUIPMENT_TYPES = {}
-EQUIPMENT_TYPES["macbook"] = EQUIPMENT_TYPES["tmac"] = EQUIPMENT_TYPES["mac"] = "macbook"
-EQUIPMENT_TYPES["charger"] = EQUIPMENT_TYPES["charge"] = EQUIPMENT_TYPES["procharger"] = "charger"
-EQUIPMENT_TYPES["tb"] = EQUIPMENT_TYPES["thunderbolt"] = EQUIPMENT_TYPES["thunder"] = "thunderbolt"
+EQUIPMENT_TYPES["macbook"] = EQUIPMENT_TYPES[
+    "tmac"] = EQUIPMENT_TYPES["mac"] = "macbook"
+EQUIPMENT_TYPES["charger"] = EQUIPMENT_TYPES[
+    "charge"] = EQUIPMENT_TYPES["procharger"] = "charger"
+EQUIPMENT_TYPES["tb"] = EQUIPMENT_TYPES[
+    "thunderbolt"] = EQUIPMENT_TYPES["thunder"] = "thunderbolt"
 
 
 @respond_to('hello$|hi$|hey$|aloha$|bonjour$', re.IGNORECASE)
@@ -58,21 +61,32 @@ def find_equipment_by_slack_id(message, command, owner_handle, equipment_type):
     if equipment_type in EQUIPMENT_TYPES:
         time.sleep(1)
         message.reply(random.choice(loading_messages)["quote"])
-        time.sleep(2)  # fake loading
 
         equipment_type = EQUIPMENT_TYPES[equipment_type]
-        message.reply("Finding {}'s {}".format(owner_handle, equipment_type))
 
         slack_id = extract_id_from_slack_handle(owner_handle)
-        equipment = get_equipment_by_slack_id(slack_id, equipment_type)
-        time.sleep(1)
-        message.reply(str([i for i in equipment]))
+        equipments = get_equipment_by_slack_id(slack_id, equipment_type)
+
+        if equipments is not None and equipments.count():
+            print equipments
+            attachments += [build_search_reply_atachment(
+                equipment, equipment_type) for equipment in equipments]
+            time.sleep(2)  # fake loading
+            print attachments
+            message.send_webapi('', json.dumps(attachments))
+        else:
+            time.sleep(1)
+            message.reply("We were unable to find a "
+                          "{} belonging to {} :snowman_without_snow:".format(
+                              equipment_type,
+                              owner_handle))
     elif equipment_type not in EQUIPMENT_TYPES:
         responses = [
             "Yea, {} could use {}".format(owner_handle, equipment_type),
             "I don't think {} has {}".format(owner_handle, equipment_type),
             "That's highly unprofessional.:expressionless:",
-            "{} is perfectly fine without {}".format(owner_handle, equipment_type),
+            "{} is perfectly fine without {}".format(
+                owner_handle, equipment_type),
             "Here you go {} : {}".format(owner_handle, equipment_type)
         ]
         time.sleep(1)
@@ -82,27 +96,26 @@ def find_equipment_by_slack_id(message, command, owner_handle, equipment_type):
 
 @respond_to("(find|get|search|retrieve) (mac|tmac|macbook|charger|charge|procharger|tb|thunderbolt|thunder).*?(\d+)", re.IGNORECASE)
 def find_equipment(message, command, equipment_type, equipment_id):
-    time.sleep(1)
-    message.reply(random.choice(loading_messages)["quote"])
-
     attachments = []
-    equipment_type = equipment_type.strip().lower()
-    print equipment_type
+    equipment_type = EQUIPMENT_TYPES[equipment_type.strip().lower()]
     # get equipment from db
-    equipment = get_equipment(int(equipment_id), equipment_type)
+    equipments = get_equipment(int(equipment_id), equipment_type)
 
-    if equipment:
-        time.sleep(2)  # fake loading
-        attachments.extend(
-            build_search_reply_atachment(equipment,
-                                         "item"))
+    if equipments is not None and equipments.count():
         time.sleep(1)
-        message.send_webapi('', json.dumps(attachments))
+        message.reply(random.choice(loading_messages)["quote"])
+
+        attachments += [build_search_reply_atachment(
+            equipment, equipment_type) for equipment in equipments]
+        time.sleep(2)  # fake loading
+
+        text = "\n" if equipments.count() < 2 else "\n*There seem to have been more than one version of this item*"
+        message.send_webapi(text, json.dumps(attachments))
         return
     else:
         time.sleep(1)
-        message.reply("We were unable to find an "
-                      "item by the id {} :snowman_without_snow:".format(equipment_id))
+        message.reply("We were unable to find a "
+                      "{} by the id {} :snowman_without_snow:".format(equipment_type, equipment_id))
 
 
 @respond_to("lost (mac|tmac|macbook|charger|charge|procharger|tb|thunderbolt|thunder).*?(\d+)")
