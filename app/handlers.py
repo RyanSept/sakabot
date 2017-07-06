@@ -4,7 +4,7 @@ import random
 import time
 import json
 from slackbot.bot import respond_to
-from app.core import get_equipment, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_user_equipment_found, remove_from_found, get_help_message, get_equipment_by_slack_id, extract_id_from_slack_handle
+from app.core import get_equipment, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_user_equipment_found, remove_from_found, get_help_message, get_equipment_by_slack_id, extract_id_from_slack_handle, get_slack_id_by_email
 from app.config import HOME_DIR
 
 
@@ -109,7 +109,8 @@ def find_equipment(message, command, equipment_type, equipment_id):
             equipment, equipment_type) for equipment in equipments]
         time.sleep(2)  # fake loading
 
-        text = "\n" if equipments.count() < 2 else "\n*There seem to have been more than one version of this item*"
+        text = "\n" if equipments.count(
+        ) < 2 else "\n*There seem to have been more than one version of this item*"
         message.send_webapi(text, json.dumps(attachments))
         return
     else:
@@ -123,11 +124,22 @@ def report_lost(message, equipment_type, equipment_id):
     '''
     Report an item has been lost
     '''
+    equipment_type = EQUIPMENT_TYPES[equipment_type.strip().lower()]
     # get equipment from db
-    equipment = get_equipment(int(equipment_id), equipment_type)
+    equipments = get_equipment(int(equipment_id), equipment_type)
 
-    if equipment:
-        owner = message.body['user']
+    if equipments is not None and equipments.count():
+        equipment = equipments[0]
+        # since we have the equipment we check if it's owner's slack_id is
+        # in our database
+        owner = get_slack_id_by_email(equipment["owner_email"])
+        reporter = message.body['user']
+
+        # equipment doesn't belong to the one saying it's lost
+        if owner is not None and reporter != owner:
+            time.sleep(1)
+            message.reply("You can only report as lost what belongs to you.")
+            return
 
         # try to find if equipment is in the found collection before adding it
         found_equipment = search_found_equipment(equipment)
@@ -160,7 +172,7 @@ def report_lost(message, equipment_type, equipment_id):
                       "and thus can't be reported as lost.")
 
 
-@respond_to("found (mac|tmac|macbook|charger|charge|procharger|tb|thunderbolt|thunder).*?(\d+)")
+@respond_to("found (mac|tmac|macbook|charger|charge|procharger|tb|thunderbolt|thunder).*?(\d+)", re.IGNORECASE)
 def submit_found(message, equipment_type, equipment_id):
     '''
     Submit a found item

@@ -11,6 +11,12 @@ def extract_id_from_slack_handle(slack_handle):
     return match[0] if match else slack_handle
 
 
+def get_slack_id_by_email(email):
+    handle = slack_handles.find_one({"email": email})
+    return handle["slack_id"]\
+        if "slack_id" in handle else None
+
+
 def get_equipment(equipment_id, equipment_type):
     '''
     Get equipment from database by id
