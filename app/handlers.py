@@ -4,7 +4,7 @@ import random
 import time
 import json
 from slackbot.bot import respond_to
-from app.core import get_equipment, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_user_equipment_found, remove_from_found, get_help_message, get_equipment_by_slack_id, extract_id_from_slack_handle, get_slack_id_by_email
+from app.core import get_equipment, build_search_reply_atachment, add_lost_equipment, search_found_equipment, remove_from_lost, search_lost_equipment, add_found_equipment, notify_owner_equipment_found, remove_from_found, get_help_message, get_equipment_by_slack_id, extract_id_from_slack_handle, get_slack_id_by_email
 from app.config import HOME_DIR
 
 
@@ -177,18 +177,20 @@ def submit_found(message, equipment_type, equipment_id):
     '''
     Submit a found item
     '''
+    equipment_type = EQUIPMENT_TYPES[equipment_type.strip().lower()]
     # get equipment from db
-    equipment = get_equipment(int(equipment_id), equipment_type)
+    equipments = get_equipment(int(equipment_id), equipment_type)
 
-    if equipment:
+    if equipments is not None and equipments.count():
+        equipment = equipments[0]
         submitter = message.body['user']
         # check if item is in lost collection
         lost_equipment = search_lost_equipment(equipment)
 
         if lost_equipment:
             time.sleep(1)
-            notify_user_equipment_found(submitter, lost_equipment[
-                                        'owner'], equipment_type)
+            notify_owner_equipment_found(submitter, lost_equipment[
+                'owner'], equipment_type)
             message.reply("Woohoo!:tada: We've notified the owner <@{}> "
                           "that you found their {}.\nI would pat your "
                           "back if I had any hands."

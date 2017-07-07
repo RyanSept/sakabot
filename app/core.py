@@ -105,7 +105,7 @@ def search_lost_equipment(equipment):
     return lost.find_one({"equipment": equipment})
 
 
-def notify_user_equipment_found(submitter, owner, equipment_type):
+def notify_owner_equipment_found(submitter, owner, equipment_type):
     message = "The user <@{}> found your `{}`".format(
         submitter, equipment_type)
     slack_client.api_call("chat.postMessage", text=message, channel=owner)
