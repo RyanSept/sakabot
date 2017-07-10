@@ -130,8 +130,7 @@ def report_lost(message, equipment_type, equipment_id):
 
     if equipments is not None and equipments.count():
         equipment = equipments[0]
-        # since we have the equipment we check if it's owner's slack_id is
-        # in our database
+        # check if equipment's owner's slack_id is in our database
         owner = get_slack_id_by_email(equipment["owner_email"])
         reporter = message.body['user']
 
@@ -183,7 +182,21 @@ def submit_found(message, equipment_type, equipment_id):
 
     if equipments is not None and equipments.count():
         equipment = equipments[0]
+        # check if equipment's owner's slack_id is in our database
+        owner = get_slack_id_by_email(equipment["owner_email"])
         submitter = message.body['user']
+
+        # if we found owner in our db
+        # tell owner who found the equipment and break
+        if owner is not None:
+            time.sleep(1)
+            message.reply("Thanks. We're notifying <@{}> "
+                          "you found their {}".format(
+                              owner, equipment_type))
+            notify_owner_equipment_found(submitter, owner, equipment_type)
+            remove_from_lost(equipment)
+            return
+
         # check if item is in lost collection
         lost_equipment = search_lost_equipment(equipment)
 
