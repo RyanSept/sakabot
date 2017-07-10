@@ -106,7 +106,16 @@ def search_lost_equipment(equipment):
 
 
 def notify_owner_equipment_found(submitter, owner, equipment_type):
-    message = "The user <@{}> found your `{}`".format(
+    """
+    Notify owner that their equipment has been found
+        submitter
+            slack_id of person who said they found it
+        owner
+            slack id of person who owns the equipment
+        equipment type
+            what kind of equipment it is eg. macbook, thunderbolt etc.
+    """
+    message = "The user <@{}> says they found your `{}`".format(
         submitter, equipment_type)
     slack_client.api_call("chat.postMessage", text=message, channel=owner)
 
@@ -183,6 +192,7 @@ def get_help_message():
     ]
 
 
+# deprecated
 loading_messages = [
     "We're testing your patience.",
     "A few bits tried to escape, we're catching them...",
