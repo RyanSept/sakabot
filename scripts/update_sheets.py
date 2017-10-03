@@ -81,11 +81,17 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     # Number of new rows to be writen
     """
     Function to write the newly found data to the bot_sheet
-
+    example columns:
+    columns = {
+        1: 'item',
+        2: 'asset_code',
+        3: 'owner'
+    }
     :param sheet: Sheet the data is to be written to (bot_sheet)
-    :param start_row: The row from which the new data is to be written
-    :param columns: Number of columns in the sheet being writen (bot_sheet)
+    :param start_row: The row from which the new data start to be written
+    :param columns: Dict of each col_num with its title as value
     :param data: The data to be writen to the bot_sheet
+    :param col_len: Number of cols in the sheet being writen
     :returns: None
     """
     rows = len(data.keys())
@@ -101,15 +107,9 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     for tb in data.keys():
         cells = row_cells[count]
         for cell in cells:
-            if cell.col == 1:
-                # TODO: Map sheet fields dynamically 
-                cell.value = data[tb].get('item')
-            elif cell.col == 2:
-                cell.value = data[tb].get('asset_code')
-            elif cell.col == 3:
-                cell.value = data[tb].get('owner')
-            else:
-                cell.value = ''
+            for col_num in columns.keys():
+                if cell.col == col_num:
+                    cell.value = data[tb].get(columns.get(col_num))
         count += 1
     # un-bundle the row cells
     updated_cells = [cell for row_cell in row_cells for cell in row_cell]
