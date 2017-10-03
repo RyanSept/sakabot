@@ -86,3 +86,5 @@ celerybeat-schedule
 venv/
 ENV/
 .DS_Store
+.idea/
+scripts/*.json
