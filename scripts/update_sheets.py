@@ -54,7 +54,7 @@ def check_for_new_tb():
 def get_new_tb_data(sheet, tbs, cols):
     """
     Function to return new tb data - tb_asset_code and owner from the
-    andela_equips sheet which s to be written to the new sheet - bot_sheet
+    andela_equips sheet which is to be written to the new sheet - bot_sheet
 
     :param sheet: sheet from which the new tbs are from - andela_sheet
     :param tbs: new thunderbolts not in the bot sheet
@@ -63,8 +63,11 @@ def get_new_tb_data(sheet, tbs, cols):
     """
     tb_data = {}
     for tb in tbs:
+        # Get the row number which the tb is from
         tb_row = re.findall(r'\d+', utils.rowcol_to_a1(tb.row, tb.col))[0]
+        # Get the tb owner value from the above row
         tb_owner = sheet.acell(f'{cols.get("owner_col")}{tb_row}')
+
         tb_data[tb.value] = {
             'owner': tb_owner.value,
             'item': 'Thunderbolt-Ethernet adapter',
@@ -74,14 +77,24 @@ def get_new_tb_data(sheet, tbs, cols):
     return tb_data
 
 
-def write_data(sheet, start_row, cols, data):
+def write_data(sheet, start_row, columns, data, col_len=4):
+    # Number of new rows to be writen
+    """
+    Function to write the newly found data to the bot_sheet
+
+    :param sheet: Sheet the data is to be written to (bot_sheet)
+    :param start_row: The row from which the new data is to be written
+    :param columns: Number of columns in the sheet being writen (bot_sheet)
+    :param data: The data to be writen to the bot_sheet
+    :returns: None
+    """
     rows = len(data.keys())
-    columns = 4
     # cells to update
     cell_list = sheet.range(f'{utils.rowcol_to_a1(start_row, 1)}:'
-                            f'{utils.rowcol_to_a1(start_row+rows - 1, columns)}')
+                            f'{utils.rowcol_to_a1(start_row + rows - 1, col_len)}')
     # group all cells making up a row into their own list
-    row_cells = [list(g) for _, g in itertools.groupby(cell_list, lambda cell: cell.row)]
+    row_cells = [list(g) for _, g in itertools.groupby(cell_list,
+                                                       lambda cell: cell.row)]
 
     # update each cell by giving it a value
     count = 0
@@ -89,6 +102,7 @@ def write_data(sheet, start_row, cols, data):
         cells = row_cells[count]
         for cell in cells:
             if cell.col == 1:
+                # TODO: Map sheet fields dynamically 
                 cell.value = data[tb].get('item')
             elif cell.col == 2:
                 cell.value = data[tb].get('asset_code')
@@ -101,7 +115,7 @@ def write_data(sheet, start_row, cols, data):
     updated_cells = [cell for row_cell in row_cells for cell in row_cell]
     # update sheet
     sheet.update_cells(updated_cells)
-    print('Sheet update -- Hooray')
+    print('Sheet update successful -- Hooray')
 
 
 def first_empty_data_row(sheet, col_num=1):
@@ -120,4 +134,9 @@ def first_empty_data_row(sheet, col_num=1):
 
 
 data = get_new_tb_data(andela_sheet, check_for_new_tb(), {"owner_col": 'I'})
-print(write_data(bot_sheet, first_empty_data_row(bot_sheet), 4, data))
+columns = {
+    1: 'item',
+    2: 'asset_code',
+    3: 'owner'
+}
+print(write_data(bot_sheet, first_empty_data_row(bot_sheet), columns, data))
