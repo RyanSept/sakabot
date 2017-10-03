@@ -2,6 +2,8 @@ import gspread
 from gspread import utils
 from oauth2client.service_account import ServiceAccountCredentials
 import re
+import itertools
+
 
 scope = ['https://spreadsheets.google.com/feeds']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
@@ -65,7 +67,57 @@ def get_new_tb_data(sheet, tbs, cols):
         tb_owner = sheet.acell(f'{cols.get("owner_col")}{tb_row}')
         tb_data[tb.value] = {
             'owner': tb_owner.value,
-            'item': 'Thunderbolt-Ethernet adapter'
+            'item': 'Thunderbolt-Ethernet adapter',
+            'asset_code': tb.value
         }
 
     return tb_data
+
+
+def write_data(sheet, start_row, cols, data):
+    rows = len(data.keys())
+    columns = 4
+    # cells to update
+    cell_list = sheet.range(f'{utils.rowcol_to_a1(start_row, 1)}:'
+                            f'{utils.rowcol_to_a1(start_row+rows - 1, columns)}')
+    # group all cells making up a row into their own list
+    row_cells = [list(g) for _, g in itertools.groupby(cell_list, lambda cell: cell.row)]
+
+    # update each cell by giving it a value
+    count = 0
+    for tb in data.keys():
+        cells = row_cells[count]
+        for cell in cells:
+            if cell.col == 1:
+                cell.value = data[tb].get('item')
+            elif cell.col == 2:
+                cell.value = data[tb].get('asset_code')
+            elif cell.col == 3:
+                cell.value = data[tb].get('owner')
+            else:
+                cell.value = ''
+        count += 1
+    # un-bundle the row cells
+    updated_cells = [cell for row_cell in row_cells for cell in row_cell]
+    # update sheet
+    sheet.update_cells(updated_cells)
+    print('Sheet update -- Hooray')
+
+
+def first_empty_data_row(sheet, col_num=1):
+    """
+    Function to return first empty row from the bot_sheet
+    :param sheet: sheet being checked
+    :param col_num: Which column to use during the check
+    :return: first_empty_row - integer
+    """
+    first_tb_row = [cell for cell in sheet.col_values(col_num)].\
+        index("Thunderbolt-Ethernet adapter") + 1
+    bot_tbs = len([cell for cell in sheet.col_values(col_num)
+                   if cell == "Thunderbolt-Ethernet adapter"])
+    first_empty_row = bot_tbs + first_tb_row
+    return first_empty_row
+
+
+data = get_new_tb_data(andela_sheet, check_for_new_tb(), {"owner_col": 'I'})
+print(write_data(bot_sheet, first_empty_data_row(bot_sheet), 4, data))
