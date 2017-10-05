@@ -90,12 +90,16 @@ def get_new_items_data(sheet, items, cols, item_label):
         # Get the tb owner value from the above row
         item_owner = sheet.acell(f'{cols.get("owner_col")}{item_row}')
 
-        # TODO: Change this to be done dynamically - since number of fields to be saved differ! - use cols variable
-        items_data[item.value] = {
-            'owner': item_owner.value,
-            'item': item_label,
-            'asset_code': item.value
-        }
+        # check if the item has the owner value if not ignore it.
+        if item_owner.strip():
+            # TODO: Change this to be done dynamically - since number of fields to be saved differ! - use cols variable
+            items_data[item.value] = {
+                'owner': item_owner.value,
+                'item': item_label,
+                'asset_code': item.value
+            }
+        else:
+            continue
 
     return items_data
 
