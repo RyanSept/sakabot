@@ -3,14 +3,13 @@ from gspread import utils
 from oauth2client.service_account import ServiceAccountCredentials
 import re
 import itertools
-
+from pprint import pprint
 
 scope = ['https://spreadsheets.google.com/feeds']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
 gc = gspread.authorize(credentials)
 
 # data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
-bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Thunderbolt ")
 andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
 
 
@@ -31,7 +30,6 @@ def get_serial_values(sheet, col, col_value, col_num=1):
 
     and_items = len([cell for cell in sheet.col_values(col_num)
                     if cell == col_value])
-
     first_item_row = [cell for cell in sheet.col_values(col_num)].\
         index(col_value) + 1
     item_cell_range = f'{col}{first_item_row}:' \
@@ -40,12 +38,13 @@ def get_serial_values(sheet, col, col_value, col_num=1):
     return item_cells
 
 
-def get_new_items(bot_col_value, and_col_value, bot_col, and_col):
+def get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col):
     """
     Function to return a list of all items not in the bot_sheet
     Example:
-        get_new_items('Thunderbolt-Ethernet adapter', 'Thunderbolt-Ethernet adapter', 1, 1)
+        get_new_items('Thunderbolt-Ethernet adapter', 'Thunderbolt-Ethernet adapter', 'A', 'A')
 
+    :param sheet: The bot_sheet to use
     :param bot_col_value: The label of the field which says an item is a tb or mac
             in the bot_sheet e.g 'Thunderbolt-Ethernet adapter'
     :param and_col_value: The label of the field which says an item is a tb or mac
@@ -57,15 +56,14 @@ def get_new_items(bot_col_value, and_col_value, bot_col, and_col):
     """
 
     # all current item asset-codes or serial numbers in the bot_sheet
-    bot_old_items = get_serial_values(bot_sheet, bot_col, bot_col_value, col_num=1)
+    bot_old_items = get_serial_values(sheet, bot_col, bot_col_value, col_num=1)
     # all current item asset-codes or serial numbers in the andela_sheet
     and_items = get_serial_values(andela_sheet, and_col, and_col_value, col_num=1)
-
     bot_items = [item for item in bot_old_items if item.value]
     andela_items = [item for item in and_items if item.value]
-    # get newly added items
-    new_items = [item for item in andela_items if item.value and item.value not in
-               [item.value for item in bot_items]]
+    # get newly added items, leave them as cell objects - the object data is used in write_data function
+    bot_values = [item.value for item in bot_items]
+    new_items = [item for item in andela_items if item.value not in bot_values]
     return new_items
 
 
@@ -76,30 +74,40 @@ def get_new_items_data(sheet, items, cols, item_label):
     Example:
         items - from get_new_items() ^^
         get_new_items_data(andela_sheet, items, {"owner_col": 'I'}, "Thunderbolt-Ethernet adapter")
+        cols = {"owner_col": 'I'}
 
     :param sheet: sheet from which the new items are from - andela_sheet
-    :param items: new items - tb/tmac/tmac-charger or headsets not in the bot sheet
+    :param items: new items(cell objects) - tb/tmac/tmac-charger or headsets not in the bot sheet
     :param cols: dict of columns values to be read from andela_sheet
     :param item_label: Value of each cell in the item column e.g 'Thunderbolt-Ethernet adapter'
     :return: items_data - dict with all the new data to be writen to bot_sheet
     """
+
     items_data = {}
     for item in items:
-        # Get the row number which the tb is from
+        # Get the row number which the item is from
         item_row = re.findall(r'\d+', utils.rowcol_to_a1(item.row, item.col))[0]
-        # Get the tb owner value from the above row
-        item_owner = sheet.acell(f'{cols.get("owner_col")}{item_row}')
+        item_owner = sheet.acell(f'{cols.get("owner")}{item_row}').value
 
         # check if the item has the owner value if not ignore it.
-        if item_owner.strip():
-            # TODO: Change this to be done dynamically - since number of fields to be saved differ! - use cols variable
-            items_data[item.value] = {
-                'owner': item_owner.value,
-                'item': item_label,
-                'asset_code': item.value
-            }
-        else:
-            continue
+        # `owner` is a compulsory field for each `cols object`
+        if item_owner:
+            # Get the other field values for the item - from the above row
+            items_data.setdefault(item.value, {})['owner'] = item_owner
+            # we already have the owner field value
+            for field in [field for field in cols.keys() if field != 'owner']:
+                if cols[field]:
+                    items_data[item.value][field] = sheet.acell(f'{cols[field]}{item_row}').value
+                # Both item and asset_code are available hence no need to get them from sheet
+                # item is available as item_label and asset_code as the value of each item
+                else:
+                    if field == 'item':
+                        items_data[item.value][field] = item_label
+                    elif field == 'asset_code':
+                        items_data[item.value][field] = item.value
+                    else:
+                        continue
+        continue
 
     return items_data
 
@@ -114,6 +122,7 @@ def write_data(sheet, start_row, columns, data, col_len=4):
         2: 'asset_code',
         3: 'owner'
     }
+
     :param sheet: Sheet the data is to be written to (bot_sheet)
     :param start_row: The row from which the new data starts to be written
     :param columns: Dict of each col_num with its title as value, check above example
@@ -166,11 +175,113 @@ def first_empty_data_row(sheet, col_value, col_num=1):
     return first_empty_row
 
 
-items = get_new_items('Thunderbolt-Ethernet adapter', 'Thunderbolt-Ethernet adapter', 1, 1)
-data = get_new_items_data(andela_sheet, items, {"owner_col": 'I'}, "Thunderbolt-Ethernet adapter")
-columns = {
-    1: 'item',
-    2: 'asset_code',
-    3: 'owner'
-}
-print(write_data(bot_sheet, first_empty_data_row(bot_sheet, "Thunderbolt-Ethernet adapter"), columns, data))
+def tmac_chargers():
+    # Get and write tmac_chargers
+    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbook Chargers ")
+    # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
+    items = get_new_items(bot_sheet, 'Training Macbook Charger', 'Macbook Charger', 'B', 'C')
+    cols = {
+        "owner": 'I',
+        "asset_code": '',
+        'item': '',
+    }
+    # get_new_items_data(sheet, items, cols, item_label)
+    data = get_new_items_data(andela_sheet, items, cols, "Training Macbook Charger")
+    columns = {
+        1: 'item',
+        2: 'asset_code',
+        3: 'owner'
+    }
+    # first_empty_data_row(sheet, col_value, col_num=1)
+    start_row = first_empty_data_row(bot_sheet, "Training Macbook Charger")
+    # write_data(sheet, start_row, columns, data, col_len=4)
+    print(write_data(bot_sheet, start_row, columns, data))
+
+
+def thunderbolts():
+    # Get and write thunderbolts
+    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Thunderbolt ")
+    # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
+    items = get_new_items(bot_sheet, 'Thunderbolt-Ethernet adapter', 'Thunderbolt-Ethernet adapter', 'B', 'C')
+    cols = {
+        "owner": 'I',
+        "asset_code": '',
+        'item': '',
+    }
+    # get_new_items_data(sheet, items, cols, item_label)
+    data = get_new_items_data(andela_sheet, items, cols, "Thunderbolt-Ethernet adapter")
+    columns = {
+        1: 'item',
+        2: 'asset_code',
+        3: 'owner'
+    }
+    # first_empty_data_row(sheet, col_value, col_num=1)
+    start_row = first_empty_data_row(bot_sheet, "Thunderbolt-Ethernet adapter")
+    # write_data(sheet, start_row, columns, data, col_len=4)
+    print(write_data(bot_sheet, start_row, columns, data))
+
+
+def headsets():
+    # Get and write thunderbolts
+    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Headsets")
+    # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
+    items = get_new_items(bot_sheet, 'Headsets', 'Headsets', 'C', 'C')
+    cols = {
+        "owner": 'I',
+        "description": 'B',
+        "asset_code": '',
+        'item': '',
+    }
+    # get_new_items_data(sheet, items, cols, item_label)
+    data = get_new_items_data(andela_sheet, items, cols, "Headsets")
+    columns = {
+        1: 'item',
+        2: 'description',
+        3: 'asset_code',
+        4: 'owner'
+    }
+    # first_empty_data_row(sheet, col_value, col_num=1)
+    start_row = first_empty_data_row(bot_sheet, "Headsets")
+    # write_data(sheet, start_row, columns, data, col_len=4)
+    print(write_data(bot_sheet, start_row, columns, data))
+
+
+def tmacs():
+    # Get and write thunderbolts
+    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbooks ")
+    # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
+    items = get_new_items(bot_sheet, 'Training Macbook', 'Training Macbook', 'C', 'C')
+    cols = {
+        "owner": 'I',
+        "description": 'B',
+        "serial": 'G',
+        "asset_code": '',
+        "cohort": 'J',
+        'item': '',
+    }
+    # get_new_items_data(sheet, items, cols, item_label)
+    data = get_new_items_data(andela_sheet, items, cols, 'Training Macbook')
+    columns = {
+        1: 'item',
+        2: 'description',
+        3: 'asset_code',
+        4: 'serial',
+        5: 'owner',
+        6: 'email',
+        7: 'cohort'
+    }
+    # first_empty_data_row(sheet, col_value, col_num=1)
+    start_row = first_empty_data_row(bot_sheet, 'Training Macbook')
+    # write_data(sheet, start_row, columns, data, col_len=4)
+    print(write_data(bot_sheet, start_row, columns, data))
+
+
+def main():
+    # thunderbolts()
+    # tmac_chargers()
+    headsets()
+    # tmacs()
+
+
+if __name__ == '__main__':
+    main()
