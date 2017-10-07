@@ -1,8 +1,8 @@
 import gspread
 from gspread import utils
 from oauth2client.service_account import ServiceAccountCredentials
-import re
-import itertools
+from operator import itemgetter
+from itertools import groupby
 from pprint import pprint
 
 scope = ['https://spreadsheets.google.com/feeds']
@@ -28,14 +28,18 @@ def get_serial_values(sheet, col, col_value, col_num=1):
     :return: serial_nums - list of cell objects in the range
     """
 
-    and_items = len([cell for cell in sheet.col_values(col_num)
-                    if cell == col_value])
-    first_item_row = [cell for cell in sheet.col_values(col_num)].\
-        index(col_value) + 1
-    item_cell_range = f'{col}{first_item_row}:' \
-                      f'{col}{and_items + first_item_row - 1}'
-    item_cells = sheet.range(item_cell_range)
-    return item_cells
+    item_cells = []
+    and_items = sheet.findall(col_value)
+    for item in and_items:
+        item_cells.append(item.row)
+
+    # list of lists of consecutive numbers
+    cell_lists = [list(map(itemgetter(1), g)) for k, g in groupby(enumerate(item_cells), lambda x: x[0] - x[1])]
+    cell_ranges = []
+    for cell_list in cell_lists:
+        cell_range = f'{col}{cell_list[0]}:{col}{cell_list[-1]}'
+        cell_ranges.extend(sheet.range(cell_range))
+    return cell_ranges
 
 
 def get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col):
@@ -64,6 +68,7 @@ def get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col):
     # get newly added items, leave them as cell objects - the object data is used in write_data function
     bot_values = [item.value for item in bot_items]
     new_items = [item for item in andela_items if item.value not in bot_values]
+    pprint(new_items)
     return new_items
 
 
@@ -86,7 +91,7 @@ def get_new_items_data(sheet, items, cols, item_label):
     items_data = {}
     for item in items:
         # Get the row number which the item is from
-        item_row = re.findall(r'\d+', utils.rowcol_to_a1(item.row, item.col))[0]
+        item_row = item.row
         item_owner = sheet.acell(f'{cols.get("owner")}{item_row}').value
 
         # check if the item has the owner value if not ignore it.
@@ -106,9 +111,9 @@ def get_new_items_data(sheet, items, cols, item_label):
                     elif field == 'asset_code':
                         items_data[item.value][field] = item.value
                     else:
-                        continue
+                        items_data[item.value][field] = ''
         continue
-
+    pprint(items_data)
     return items_data
 
 
@@ -135,8 +140,7 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     cell_list = sheet.range(f'{utils.rowcol_to_a1(start_row, 1)}:'
                             f'{utils.rowcol_to_a1(start_row + rows - 1, col_len)}')
     # group all cells making up a row into their own list
-    row_cells = [list(g) for _, g in itertools.groupby(cell_list,
-                                                       lambda cell: cell.row)]
+    row_cells = [list(g) for _, g in groupby(cell_list, lambda cell: cell.row)]
 
     # update each cell by giving it a value, from the data
     count = 0
@@ -258,29 +262,30 @@ def tmacs():
         "asset_code": '',
         "cohort": 'J',
         'item': '',
+        'email': ''
     }
-    # get_new_items_data(sheet, items, cols, item_label)
-    data = get_new_items_data(andela_sheet, items, cols, 'Training Macbook')
-    columns = {
-        1: 'item',
-        2: 'description',
-        3: 'asset_code',
-        4: 'serial',
-        5: 'owner',
-        6: 'email',
-        7: 'cohort'
-    }
-    # first_empty_data_row(sheet, col_value, col_num=1)
-    start_row = first_empty_data_row(bot_sheet, 'Training Macbook')
-    # write_data(sheet, start_row, columns, data, col_len=4)
-    print(write_data(bot_sheet, start_row, columns, data))
+    # # get_new_items_data(sheet, items, cols, item_label)
+    # data = get_new_items_data(andela_sheet, items, cols, 'Training Macbook')
+    # columns = {
+    #     1: 'item',
+    #     2: 'description',
+    #     3: 'asset_code',
+    #     4: 'serial',
+    #     5: 'owner',
+    #     6: 'email',
+    #     7: 'cohort'
+    # }
+    # # first_empty_data_row(sheet, col_value, col_num=1)
+    # start_row = first_empty_data_row(bot_sheet, 'Training Macbook')
+    # # write_data(sheet, start_row, columns, data, col_len=4)
+    # print(write_data(bot_sheet, start_row, columns, data))
 
 
 def main():
     # thunderbolts()
     # tmac_chargers()
-    headsets()
-    # tmacs()
+    #headsets()  # TODO: Get items even if not consecutive
+    tmacs()
 
 
 if __name__ == '__main__':
