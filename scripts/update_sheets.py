@@ -3,7 +3,6 @@ from gspread import utils
 from oauth2client.service_account import ServiceAccountCredentials
 from operator import itemgetter
 from itertools import groupby
-from pprint import pprint
 
 scope = ['https://spreadsheets.google.com/feeds']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
@@ -68,7 +67,6 @@ def get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col):
     # get newly added items, leave them as cell objects - the object data is used in write_data function
     bot_values = [item.value for item in bot_items]
     new_items = [item for item in andela_items if item.value not in bot_values]
-    pprint(new_items)
     return new_items
 
 
@@ -113,7 +111,6 @@ def get_new_items_data(sheet, items, cols, item_label):
                     else:
                         items_data[item.value][field] = ''
         continue
-    pprint(items_data)
     return items_data
 
 
@@ -188,13 +185,15 @@ def tmac_chargers():
         "owner": 'I',
         "asset_code": '',
         'item': '',
+        'email': ''
     }
     # get_new_items_data(sheet, items, cols, item_label)
     data = get_new_items_data(andela_sheet, items, cols, "Training Macbook Charger")
     columns = {
         1: 'item',
         2: 'asset_code',
-        3: 'owner'
+        3: 'owner',
+        4: 'email'
     }
     # first_empty_data_row(sheet, col_value, col_num=1)
     start_row = first_empty_data_row(bot_sheet, "Training Macbook Charger")
@@ -211,13 +210,15 @@ def thunderbolts():
         "owner": 'I',
         "asset_code": '',
         'item': '',
+        'email': ''
     }
     # get_new_items_data(sheet, items, cols, item_label)
     data = get_new_items_data(andela_sheet, items, cols, "Thunderbolt-Ethernet adapter")
     columns = {
         1: 'item',
         2: 'asset_code',
-        3: 'owner'
+        3: 'owner',
+        4: 'email'
     }
     # first_empty_data_row(sheet, col_value, col_num=1)
     start_row = first_empty_data_row(bot_sheet, "Thunderbolt-Ethernet adapter")
@@ -234,7 +235,7 @@ def headsets():
         "owner": 'I',
         "description": 'B',
         "asset_code": '',
-        'item': '',
+        'item': ''
     }
     # get_new_items_data(sheet, items, cols, item_label)
     data = get_new_items_data(andela_sheet, items, cols, "Headsets")
@@ -264,27 +265,27 @@ def tmacs():
         'item': '',
         'email': ''
     }
-    # # get_new_items_data(sheet, items, cols, item_label)
-    # data = get_new_items_data(andela_sheet, items, cols, 'Training Macbook')
-    # columns = {
-    #     1: 'item',
-    #     2: 'description',
-    #     3: 'asset_code',
-    #     4: 'serial',
-    #     5: 'owner',
-    #     6: 'email',
-    #     7: 'cohort'
-    # }
-    # # first_empty_data_row(sheet, col_value, col_num=1)
-    # start_row = first_empty_data_row(bot_sheet, 'Training Macbook')
-    # # write_data(sheet, start_row, columns, data, col_len=4)
-    # print(write_data(bot_sheet, start_row, columns, data))
+    # get_new_items_data(sheet, items, cols, item_label)
+    data = get_new_items_data(andela_sheet, items, cols, 'Training Macbook')
+    columns = {
+        1: 'item',
+        2: 'description',
+        3: 'asset_code',
+        4: 'serial',
+        5: 'owner',
+        6: 'email',
+        7: 'cohort'
+    }
+    # first_empty_data_row(sheet, col_value, col_num=1)
+    start_row = first_empty_data_row(bot_sheet, 'Training Macbook')
+    # write_data(sheet, start_row, columns, data, col_len=4)
+    print(write_data(bot_sheet, start_row, columns, data, col_len=7))
 
 
 def main():
-    # thunderbolts()
-    # tmac_chargers()
-    #headsets()  # TODO: Get items even if not consecutive
+    thunderbolts()
+    tmac_chargers()
+    headsets()
     tmacs()
 
 
