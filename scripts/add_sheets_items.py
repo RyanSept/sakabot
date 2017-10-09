@@ -1,15 +1,11 @@
-import gspread
 from gspread import utils
-from oauth2client.service_account import ServiceAccountCredentials
 from operator import itemgetter
 from itertools import groupby
 
-scope = ['https://spreadsheets.google.com/feeds']
-credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
-gc = gspread.authorize(credentials)
+from app.utils import gsheet
 
 # data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
-andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
+andela_sheet = gsheet.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
 
 
 def get_serial_values(sheet, col, col_value, col_num=1):
@@ -178,7 +174,7 @@ def first_empty_data_row(sheet, col_value, col_num=1):
 
 def tmac_chargers():
     # Get and write tmac_chargers
-    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbook Chargers ")
+    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbook Chargers ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
     items = get_new_items(bot_sheet, 'Training Macbook Charger', 'Macbook Charger', 'B', 'C')
     cols = {
@@ -203,7 +199,7 @@ def tmac_chargers():
 
 def thunderbolts():
     # Get and write thunderbolts
-    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Thunderbolt ")
+    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Thunderbolt ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
     items = get_new_items(bot_sheet, 'Thunderbolt-Ethernet adapter', 'Thunderbolt-Ethernet adapter', 'B', 'C')
     cols = {
@@ -228,7 +224,7 @@ def thunderbolts():
 
 def headsets():
     # Get and write thunderbolts
-    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Headsets")
+    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Headsets")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
     items = get_new_items(bot_sheet, 'Headsets', 'Headsets', 'C', 'C')
     cols = {
@@ -253,7 +249,7 @@ def headsets():
 
 def tmacs():
     # Get and write thunderbolts
-    bot_sheet = gc.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbooks ")
+    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbooks ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
     items = get_new_items(bot_sheet, 'Training Macbook', 'Training Macbook', 'C', 'C')
     cols = {
