@@ -8,7 +8,6 @@ def get_ais_data():
     Function to get people data from ais
     :return: all_data - json data gotten
     """
-    # TODO: add error handling
     token = os.getenv('TOKEN')
     url = os.getenv('URL')
     if url:
