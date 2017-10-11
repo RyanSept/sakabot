@@ -1,6 +1,5 @@
 import requests
 import json
-from pprint import pprint
 import os
 
 
@@ -63,7 +62,11 @@ def write_to_file(persons_data, filename):
 
 
 if __name__ == '__main__':
+    # get ais data
     ais_data = get_ais_data()
+    # select first, last and email fields
     data = get_person_data(ais_data.get("fellow"))
-    pprint(data[:5])
-    pprint(location_filter('nairobi', data)[:5])
+    # filter for location
+    nairobi_people = location_filter('nairobi', data)
+    # write filtered data to file
+    write_to_file(nairobi_people, 'emails.json')
