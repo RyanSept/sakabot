@@ -3,16 +3,23 @@ import json
 from pprint import pprint
 import os
 
-headers = {'Authorization': os.getenv('TOKEN')}
-res = requests.get(os.getenv('URL'), headers=headers)
-all_data = json.loads(res.content)
+
+def get_ais_data():
+    """
+    Function to get people data from ais
+    :return: all_data - json data gotten
+    """
+    headers = {'Authorization': os.getenv('TOKEN')}
+    res = requests.get(os.getenv('URL'), headers=headers)
+    all_data = json.loads(res.content)
+    return all_data
 
 
 def get_person_data(all_persons_data):
     """
-    Function to
+    Function to get selected info from each person object
     :param all_persons_data:
-    :return:
+    :return: persons_data - list of selected person data objects
     """
     persons_data = []
     for person_obj in all_persons_data:
@@ -44,6 +51,19 @@ def location_filter(location, persons_data):
     return filtered_persons_data
 
 
-data = get_person_data(all_data.get("fellow"))
-pprint(data[:5])
-pprint(location_filter('nairobi', data)[:5])
+def write_to_file(persons_data, filename):
+    """
+    Function to write json data to file
+    :param persons_data: json data to be writen to file
+    :param filename: Name of the file the data is to be written to
+    """
+    with open(filename, 'w') as f:
+        # ensure_ascii makes sure that all ascii characters are left untouched
+        json.dump(persons_data,  f, ensure_ascii=False, indent=4)
+
+
+if __name__ == '__main__':
+    ais_data = get_ais_data()
+    data = get_person_data(ais_data.get("fellow"))
+    pprint(data[:5])
+    pprint(location_filter('nairobi', data)[:5])
