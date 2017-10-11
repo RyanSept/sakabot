@@ -8,10 +8,21 @@ def get_ais_data():
     Function to get people data from ais
     :return: all_data - json data gotten
     """
-    headers = {'Authorization': os.getenv('TOKEN')}
-    res = requests.get(os.getenv('URL'), headers=headers)
-    all_data = json.loads(res.content)
-    return all_data
+    # TODO: add error handling
+    token = os.getenv('TOKEN')
+    url = os.getenv('URL')
+    if url:
+        headers = {'Authorization': token}
+        res = requests.get(url, headers=headers)
+        if res.status_code == 200:
+            all_data = json.loads(res.content)
+            return all_data
+        else:
+            msg = 'Invalid token or Site down'
+            raise Exception(msg)
+    else:
+        msg = 'URL cannot be None'
+        raise requests.exceptions.MissingSchema(msg)
 
 
 def get_person_data(all_persons_data):
@@ -59,14 +70,20 @@ def write_to_file(persons_data, filename):
     with open(filename, 'w') as f:
         # ensure_ascii makes sure that all ascii characters are left untouched
         json.dump(persons_data,  f, ensure_ascii=False, indent=4)
+    return 'File writen --> Done'
 
 
 if __name__ == '__main__':
     # get ais data
-    ais_data = get_ais_data()
-    # select first, last and email fields
-    data = get_person_data(ais_data.get("fellow"))
-    # filter for location
-    nairobi_people = location_filter('nairobi', data)
-    # write filtered data to file
-    write_to_file(nairobi_people, 'emails.json')
+    try:
+        ais_data = get_ais_data()
+        # select first, last and email fields
+        data = get_person_data(ais_data.get("fellow"))
+        # filter for location
+        nairobi_people = location_filter('nairobi', data)
+        # write filtered data to file
+        print(write_to_file(nairobi_people, 'emails.json'))
+    except requests.exceptions.MissingSchema as err:
+        print('Error -->', err)
+    except Exception as err:
+        print('Error -->', err)
