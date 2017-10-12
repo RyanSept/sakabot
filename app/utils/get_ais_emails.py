@@ -1,6 +1,13 @@
 import requests
 import json
 import os
+import logging
+
+# setup info logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s:%(levelname)s:%(message)s"
+)
 
 
 def get_ais_data():
@@ -8,6 +15,7 @@ def get_ais_data():
     Function to get people data from ais
     :return: all_data - json data gotten
     """
+    logging.info('Requesting for data from AIS...')
     token = os.getenv('TOKEN')
     url = os.getenv('URL')
     if url:
@@ -15,6 +23,7 @@ def get_ais_data():
         res = requests.get(url, headers=headers)
         if res.status_code == 200:
             all_data = json.loads(res.content)
+            logging.info('Finished downloading data from AIS')
             return all_data
         else:
             msg = 'Invalid token or Site down'
@@ -30,6 +39,7 @@ def get_person_data(all_persons_data):
     :param all_persons_data:
     :return: persons_data - list of selected person data objects
     """
+    logging.info('Selecting Names and email only from the AIS data')
     persons_data = []
     for person_obj in all_persons_data:
         person_details = person_obj.get("personal_details")
@@ -41,6 +51,7 @@ def get_person_data(all_persons_data):
             "location": person_details.get("location")
         }
         persons_data.append(selected_data)
+    logging.info('Finished Selecting Names and email only from the AIS data')
     return persons_data
 
 
@@ -53,10 +64,12 @@ def location_filter(location, persons_data):
     :param persons_data: Data of all persons
     :return: list of all persons from the given location
     """
+    logging.info('Starting to filter selected data by given location: {}'.format(location))
     filtered_persons_data = []
     for person in persons_data:
         if person.get("location").lower() == location:
             filtered_persons_data.append(person)
+    logging.info('finished filtering selected data by given location: {}'.format(location))
     return filtered_persons_data
 
 
@@ -66,10 +79,12 @@ def write_to_file(persons_data, filename):
     :param persons_data: json data to be writen to file
     :param filename: Name of the file the data is to be written to
     """
+    logging.info('Starting to write the filtered data to emails.json')
     with open(filename, 'w') as f:
         # ensure_ascii makes sure that all ascii characters are left untouched
-        json.dump(persons_data,  f, ensure_ascii=False, indent=4)
-    return 'File writen --> Done'
+        json.dump(persons_data, f, ensure_ascii=False, indent=4)
+    logging.info('Finished writing the filtered data to emails.json')
+    logging.info('File writen --> Done')
 
 
 if __name__ == '__main__':
@@ -81,8 +96,8 @@ if __name__ == '__main__':
         # filter for location
         nairobi_people = location_filter('nairobi', data)
         # write filtered data to file
-        print(write_to_file(nairobi_people, 'emails.json'))
+        write_to_file(nairobi_people, 'emails.json')
     except requests.exceptions.MissingSchema as err:
-        print('Error -->', err)
+        logging.error('Error --> {}'.format(err))
     except Exception as err:
-        print('Error -->', err)
+        logging.error('Error --> {}'.format(err))
