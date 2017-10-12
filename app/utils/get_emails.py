@@ -10,12 +10,12 @@ logging.basicConfig(
 )
 
 
-def get_ais_data():
+def get_data():
     """
-    Function to get people data from ais
+    Function to download people data
     :return: all_data - json data gotten
     """
-    logging.info('Requesting for data from AIS...')
+    logging.info('Requesting for the data...')
     token = os.getenv('TOKEN')
     url = os.getenv('URL')
     if url:
@@ -23,7 +23,7 @@ def get_ais_data():
         res = requests.get(url, headers=headers)
         if res.status_code == 200:
             all_data = json.loads(res.content)
-            logging.info('Finished downloading data from AIS')
+            logging.info('Finished downloading data')
             return all_data
         else:
             msg = 'Invalid token or Site down'
@@ -39,7 +39,7 @@ def get_person_data(all_persons_data):
     :param all_persons_data:
     :return: persons_data - list of selected person data objects
     """
-    logging.info('Selecting Names and email only from the AIS data')
+    logging.info('Selecting Names and email only from the downloaded data')
     persons_data = []
     for person_obj in all_persons_data:
         person_details = person_obj.get("personal_details")
@@ -51,7 +51,7 @@ def get_person_data(all_persons_data):
             "location": person_details.get("location")
         }
         persons_data.append(selected_data)
-    logging.info('Finished Selecting Names and email only from the AIS data')
+    logging.info('Selected data for {} People'.format(len(persons_data)))
     return persons_data
 
 
@@ -64,12 +64,15 @@ def location_filter(location, persons_data):
     :param persons_data: Data of all persons
     :return: list of all persons from the given location
     """
-    logging.info('Starting to filter selected data by given location: {}'.format(location))
+    logging.info('Starting to filter selected data'
+                 ' by given location: {}'.format(location.capitalize()))
     filtered_persons_data = []
     for person in persons_data:
         if person.get("location").lower() == location:
             filtered_persons_data.append(person)
-    logging.info('finished filtering selected data by given location: {}'.format(location))
+    filtered_data = len(filtered_persons_data)
+    logging.info('{} people from {} found'.format(filtered_data,
+                                                  location.capitalize()))
     return filtered_persons_data
 
 
@@ -83,16 +86,15 @@ def write_to_file(persons_data, filename):
     with open(filename, 'w') as f:
         # ensure_ascii makes sure that all ascii characters are left untouched
         json.dump(persons_data, f, ensure_ascii=False, indent=4)
-    logging.info('Finished writing the filtered data to emails.json')
     logging.info('File writen --> Done')
 
 
 if __name__ == '__main__':
     # get ais data
     try:
-        ais_data = get_ais_data()
+        people_data = get_data()
         # select first, last and email fields
-        data = get_person_data(ais_data.get("fellow"))
+        data = get_person_data(people_data.get("fellow"))
         # filter for location
         nairobi_people = location_filter('nairobi', data)
         # write filtered data to file
