@@ -2,10 +2,15 @@ from gspread import utils
 from operator import itemgetter
 from itertools import groupby
 
-from app.utils import gsheet
-
-# data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
-andela_sheet = gsheet.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
+# from app.utils import gsheet
+# from oauth2client.service_account import ServiceAccountCredentials
+# import gspread
+# 
+# scope = ['https://spreadsheets.google.com/feeds']
+# credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
+# gc = gspread.authorize(credentials)
+# # data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
+# andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
 
 
 def get_serial_values(sheet, col, col_value, col_num=1):
@@ -29,7 +34,8 @@ def get_serial_values(sheet, col, col_value, col_num=1):
         item_cells.append(item.row)
 
     # list of lists of consecutive numbers
-    cell_lists = [list(map(itemgetter(1), g)) for k, g in groupby(enumerate(item_cells), lambda x: x[0] - x[1])]
+    cell_lists = [list(map(itemgetter(1), g)) for k, g
+                  in groupby(enumerate(item_cells), lambda x: x[0] - x[1])]
     cell_ranges = []
     for cell_list in cell_lists:
         cell_range = f'{col}{cell_list[0]}:{col}{cell_list[-1]}'
@@ -55,14 +61,16 @@ def get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col):
     """
 
     # all current item asset-codes or serial numbers in the bot_sheet
-    bot_old_items = get_serial_values(sheet, bot_col, bot_col_value, col_num=1)
+    bot_old_items = get_serial_values(sheet, bot_col,
+                                      bot_col_value, col_num=1)
     # all current item asset-codes or serial numbers in the andela_sheet
-    and_items = get_serial_values(andela_sheet, and_col, and_col_value, col_num=1)
+    and_items = get_serial_values(andela_sheet, and_col,
+                                  and_col_value, col_num=1)
     bot_items = [item for item in bot_old_items if item.value]
-    andela_items = [item for item in and_items if item.value]
+    and_items = [item for item in and_items if item.value]
     # get newly added items, leave them as cell objects - the object data is used in write_data function
     bot_values = [item.value for item in bot_items]
-    new_items = [item for item in andela_items if item.value not in bot_values]
+    new_items = [item for item in and_items if item.value not in bot_values]
     return new_items
 
 
@@ -96,7 +104,8 @@ def get_new_items_data(sheet, items, cols, item_label):
             # we already have the owner field value
             for field in [field for field in cols.keys() if field != 'owner']:
                 if cols[field]:
-                    items_data[item.value][field] = sheet.acell(f'{cols[field]}{item_row}').value
+                    cell = f'{cols[field]}{item_row}'
+                    items_data[item.value][field] = sheet.acell(cell).value
                 # Both item and asset_code are available hence no need to get them from sheet
                 # item is available as item_label and asset_code as the value of each item
                 else:
@@ -130,15 +139,16 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     """
     rows = len(data.keys())
     # cells to update, assumes, the first column is A - "utils.rowcol_to_a1(start_row, 1)"
-    cell_list = sheet.range(f'{utils.rowcol_to_a1(start_row, 1)}:'
-                            f'{utils.rowcol_to_a1(start_row + rows - 1, col_len)}')
+    range_start = utils.rowcol_to_a1(start_row, 1)
+    range_end = utils.rowcol_to_a1(start_row + rows - 1, col_len)
+    cell_list = sheet.range(f'{range_start}:{range_end}')
     # group all cells making up a row into their own list
-    row_cells = [list(g) for _, g in groupby(cell_list, lambda cell: cell.row)]
+    row_cels = [list(g) for _, g in groupby(cell_list, lambda cell: cell.row)]
 
     # update each cell by giving it a value, from the data
     count = 0
     for item in data.keys():
-        cells = row_cells[count]
+        cells = row_cels[count]
         for cell in cells:
             for col_num in columns.keys():
                 if cell.col == col_num:
@@ -146,7 +156,7 @@ def write_data(sheet, start_row, columns, data, col_len=4):
         count += 1
 
     # un-bundle the row cells
-    updated_cells = [cell for row_cell in row_cells for cell in row_cell]
+    updated_cells = [cell for row_cell in row_cels for cell in row_cell]
     # update sheet
     sheet.update_cells(updated_cells)
     print('Sheet update successful -- Hooray')
@@ -172,11 +182,12 @@ def first_empty_data_row(sheet, col_value, col_num=1):
     return first_empty_row
 
 
-def tmac_chargers():
+def tmac_chargers(sheet):
     # Get and write tmac_chargers
-    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbook Chargers ")
+    bot_sheet = gc.open(sheet).worksheet("Training Macbook Chargers ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
-    items = get_new_items(bot_sheet, 'Training Macbook Charger', 'Macbook Charger', 'B', 'C')
+    items = get_new_items(bot_sheet, 'Training Macbook Charger',
+                          'Macbook Charger', 'B', 'C')
     cols = {
         "owner": 'I',
         "asset_code": '',
@@ -184,7 +195,8 @@ def tmac_chargers():
         'email': ''
     }
     # get_new_items_data(sheet, items, cols, item_label)
-    data = get_new_items_data(andela_sheet, items, cols, "Training Macbook Charger")
+    data = get_new_items_data(andela_sheet, items, cols,
+                              "Training Macbook Charger")
     columns = {
         1: 'item',
         2: 'asset_code',
@@ -197,11 +209,12 @@ def tmac_chargers():
     print(write_data(bot_sheet, start_row, columns, data))
 
 
-def thunderbolts():
+def thunderbolts(sheet):
     # Get and write thunderbolts
-    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Thunderbolt ")
+    bot_sheet = gc.open(sheet).worksheet("Thunderbolt ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
-    items = get_new_items(bot_sheet, 'Thunderbolt-Ethernet adapter', 'Thunderbolt-Ethernet adapter', 'B', 'C')
+    items = get_new_items(bot_sheet, 'Thunderbolt-Ethernet adapter',
+                          'Thunderbolt-Ethernet adapter', 'B', 'C')
     cols = {
         "owner": 'I',
         "asset_code": '',
@@ -209,7 +222,8 @@ def thunderbolts():
         'email': ''
     }
     # get_new_items_data(sheet, items, cols, item_label)
-    data = get_new_items_data(andela_sheet, items, cols, "Thunderbolt-Ethernet adapter")
+    data = get_new_items_data(andela_sheet, items, cols,
+                              "Thunderbolt-Ethernet adapter")
     columns = {
         1: 'item',
         2: 'asset_code',
@@ -217,14 +231,15 @@ def thunderbolts():
         4: 'email'
     }
     # first_empty_data_row(sheet, col_value, col_num=1)
-    start_row = first_empty_data_row(bot_sheet, "Thunderbolt-Ethernet adapter")
+    start_row = first_empty_data_row(bot_sheet,
+                                     "Thunderbolt-Ethernet adapter")
     # write_data(sheet, start_row, columns, data, col_len=4)
     print(write_data(bot_sheet, start_row, columns, data))
 
 
-def headsets():
+def headsets(sheet):
     # Get and write thunderbolts
-    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Headsets")
+    bot_sheet = gc.open(sheet).worksheet("Headsets")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
     items = get_new_items(bot_sheet, 'Headsets', 'Headsets', 'C', 'C')
     cols = {
@@ -247,11 +262,12 @@ def headsets():
     print(write_data(bot_sheet, start_row, columns, data))
 
 
-def tmacs():
+def tmacs(sheet):
     # Get and write thunderbolts
-    bot_sheet = gsheet.open("Gathu Copy of Andela Nairobi Equipments").worksheet("Training Macbooks ")
+    bot_sheet = gc.open(sheet).worksheet("Training Macbooks ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
-    items = get_new_items(bot_sheet, 'Training Macbook', 'Training Macbook', 'C', 'C')
+    items = get_new_items(bot_sheet, 'Training Macbook',
+                          'Training Macbook', 'C', 'C')
     cols = {
         "owner": 'I',
         "description": 'B',
@@ -279,10 +295,11 @@ def tmacs():
 
 
 def main():
-    thunderbolts()
-    tmac_chargers()
-    headsets()
-    tmacs()
+    sheet_name = "Gathu Copy of Andela Nairobi Equipments"
+    thunderbolts(sheet_name)
+    tmac_chargers(sheet_name)
+    headsets(sheet_name)
+    tmacs(sheet_name)
 
 
 if __name__ == '__main__':
