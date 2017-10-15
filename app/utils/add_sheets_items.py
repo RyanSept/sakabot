@@ -2,20 +2,13 @@ from gspread import utils
 from operator import itemgetter
 from itertools import groupby
 import logging
-
-# from app.utils import gsheet
+from . import gsheet as gc
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s"
 )
 
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
-
-scope = ['https://spreadsheets.google.com/feeds']
-credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
-gc = gspread.authorize(credentials)
 # data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
 andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
 
