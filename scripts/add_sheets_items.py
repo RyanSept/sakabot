@@ -1,16 +1,23 @@
 from gspread import utils
 from operator import itemgetter
 from itertools import groupby
+import logging
 
 # from app.utils import gsheet
-# from oauth2client.service_account import ServiceAccountCredentials
-# import gspread
-# 
-# scope = ['https://spreadsheets.google.com/feeds']
-# credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
-# gc = gspread.authorize(credentials)
-# # data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
-# andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s:%(levelname)s:%(message)s"
+)
+
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+
+scope = ['https://spreadsheets.google.com/feeds']
+credentials = ServiceAccountCredentials.from_json_keyfile_name('pySheet-ef14783798de.json', scope)
+gc = gspread.authorize(credentials)
+# data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
+andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
 
 
 def get_serial_values(sheet, col, col_value, col_num=1):
@@ -27,7 +34,7 @@ def get_serial_values(sheet, col, col_value, col_num=1):
     :rtype: list
     :return: serial_nums - list of cell objects in the range
     """
-
+    logging.info('Getting all cells under asset_code column')
     item_cells = []
     and_items = sheet.findall(col_value)
     for item in and_items:
@@ -40,6 +47,10 @@ def get_serial_values(sheet, col, col_value, col_num=1):
     for cell_list in cell_lists:
         cell_range = f'{col}{cell_list[0]}:{col}{cell_list[-1]}'
         cell_ranges.extend(sheet.range(cell_range))
+
+    logging.info('{} cells found in sheet {}worksheet'.format(
+        len(cell_ranges), sheet.title))
+
     return cell_ranges
 
 
@@ -71,6 +82,7 @@ def get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col):
     # get newly added items, leave them as cell objects - the object data is used in write_data function
     bot_values = [item.value for item in bot_items]
     new_items = [item for item in and_items if item.value not in bot_values]
+    logging.info('{} new items found'.format(len(new_items)))
     return new_items
 
 
@@ -116,6 +128,7 @@ def get_new_items_data(sheet, items, cols, item_label):
                     else:
                         items_data[item.value][field] = ''
         continue
+    logging.info('Data from the new items created')
     return items_data
 
 
@@ -137,6 +150,7 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     :param col_len: Number of cols in the sheet being writen
     :returns: None
     """
+    logging.info('Writing data to {} worksheet'.format(sheet.title))
     rows = len(data.keys())
     # cells to update, assumes, the first column is A - "utils.rowcol_to_a1(start_row, 1)"
     range_start = utils.rowcol_to_a1(start_row, 1)
@@ -159,7 +173,7 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     updated_cells = [cell for row_cell in row_cels for cell in row_cell]
     # update sheet
     sheet.update_cells(updated_cells)
-    print('Sheet update successful -- Hooray')
+    logging.info('Data written to {} worksheet'.format(sheet.title))
 
 
 def first_empty_data_row(sheet, col_value, col_num=1):
@@ -179,10 +193,14 @@ def first_empty_data_row(sheet, col_value, col_num=1):
     bot_items = len([cell for cell in sheet.col_values(col_num)
                     if cell == col_value])
     first_empty_row = bot_items + first_item_row
+    logging.info('first empty row of {} worksheet is {}'.format(
+        sheet.title, first_empty_row
+    ))
     return first_empty_row
 
 
 def tmac_chargers(sheet):
+    logging.info('Working on the Training Macbook Chargers worksheet')
     # Get and write tmac_chargers
     bot_sheet = gc.open(sheet).worksheet("Training Macbook Chargers ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
@@ -206,10 +224,13 @@ def tmac_chargers(sheet):
     # first_empty_data_row(sheet, col_value, col_num=1)
     start_row = first_empty_data_row(bot_sheet, "Training Macbook Charger")
     # write_data(sheet, start_row, columns, data, col_len=4)
-    print(write_data(bot_sheet, start_row, columns, data))
+    write_data(bot_sheet, start_row, columns, data)
+    logging.info('Finished Working on the Training Macbook Chargers worksheet')
 
 
 def thunderbolts(sheet):
+    logging.info('Working on the Thunderbolt worksheet')
+
     # Get and write thunderbolts
     bot_sheet = gc.open(sheet).worksheet("Thunderbolt ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
@@ -234,10 +255,12 @@ def thunderbolts(sheet):
     start_row = first_empty_data_row(bot_sheet,
                                      "Thunderbolt-Ethernet adapter")
     # write_data(sheet, start_row, columns, data, col_len=4)
-    print(write_data(bot_sheet, start_row, columns, data))
+    write_data(bot_sheet, start_row, columns, data)
+    logging.info('Finished Working on the Thunderbolts worksheet')
 
 
 def headsets(sheet):
+    logging.info('Working on the Headsets worksheet')
     # Get and write thunderbolts
     bot_sheet = gc.open(sheet).worksheet("Headsets")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
@@ -259,10 +282,12 @@ def headsets(sheet):
     # first_empty_data_row(sheet, col_value, col_num=1)
     start_row = first_empty_data_row(bot_sheet, "Headsets")
     # write_data(sheet, start_row, columns, data, col_len=4)
-    print(write_data(bot_sheet, start_row, columns, data))
+    write_data(bot_sheet, start_row, columns, data)
+    logging.info('Finished Working on the Headsets worksheet')
 
 
 def tmacs(sheet):
+    logging.info('Working on the Training Macbooks worksheet')
     # Get and write thunderbolts
     bot_sheet = gc.open(sheet).worksheet("Training Macbooks ")
     # get_new_items(sheet, bot_col_value, and_col_value, bot_col, and_col)
@@ -291,7 +316,8 @@ def tmacs(sheet):
     # first_empty_data_row(sheet, col_value, col_num=1)
     start_row = first_empty_data_row(bot_sheet, 'Training Macbook')
     # write_data(sheet, start_row, columns, data, col_len=4)
-    print(write_data(bot_sheet, start_row, columns, data, col_len=7))
+    write_data(bot_sheet, start_row, columns, data, col_len=7)
+    logging.info('Finished Working on the Training Macbooks worksheet')
 
 
 def main():
