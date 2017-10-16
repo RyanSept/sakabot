@@ -2,6 +2,7 @@ from gspread import utils
 from operator import itemgetter
 from itertools import groupby
 import logging
+# import the gspread instance
 from . import gsheet as gc
 
 logging.basicConfig(
