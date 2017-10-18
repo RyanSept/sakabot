@@ -60,14 +60,14 @@ def get_data(token, url, query_params=None):
         res = requests.get(url, params=params)
         if res.status_code == 200:
             data = json.loads(res.content)
-            if data.get('ok') == 'true':
+            if data.get('ok'):
                 logging.info('Finished downloading data')
                 return data
             else:
                 msg = data.get('error')
                 raise Exception(msg)
         else:
-            msg = 'Site down'
+            msg = 'Site down or invalid URL'
             raise Exception(msg)
     else:
         msg = 'URL cannot be None'
@@ -156,12 +156,15 @@ def request_people_data():
         elif 'channel_not_found' in err.args:
             msg = 'channel_not_found: Missing or invalid CHANNEL_ID'
             logging.error('Error --> {}'.format(msg))
+        else:
+            logging.error('Error --> {}'.format(err))
 
 
 if __name__ == '__main__':
     # NOTE: This file requires slack_api token and channel_id to run
     # these two variables should be set as env variables as CHANNEL_ID
     # and TOKEN
+
     try:
         group_ids, channel_members = request_people_data()
         ids = get_peoples_id(group_ids.get('group'))
@@ -172,5 +175,3 @@ if __name__ == '__main__':
     except TypeError:
         # catch TypeError when request_people_data fails
         pass
-
-
