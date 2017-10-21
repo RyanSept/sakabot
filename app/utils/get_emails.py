@@ -143,9 +143,8 @@ def request_people_data():
 
 
 if __name__ == '__main__':
-    # NOTE: This file requires slack_api token and channel_id to run
-    # these two variables should be set as env variables as CHANNEL_ID
-    # and TOKEN
+    # NOTE: This file requires channel_id to run
+    # these variable should be set as env variables as CHANNEL_ID
 
     try:
         group_ids, channel_members = request_people_data()
