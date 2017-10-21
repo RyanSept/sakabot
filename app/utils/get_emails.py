@@ -3,25 +3,13 @@ import json
 import os
 import logging
 
+from app import slack_client
+
 # setup info logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s"
 )
-
-
-def append_params(initial_params, new_params):
-    """
-    Function to merge two dicts together
-    :param initial_params: dict
-    :param new_params: dict
-    :return: dict - merged dicts
-    """
-    if not new_params:
-        new_params = {}
-    params = initial_params.copy()
-    params.update(new_params)
-    return params
 
 
 def fix_null_name(people):
@@ -46,28 +34,22 @@ def fix_null_name(people):
     return people
 
 
-def get_data(token, url, query_params=None):
+def get_data(url, params):
     """
     Function to download data
-    :param token: slack api token or jwt
-    :param query_params: dict of query strings for the url
+    :param params: dict of query strings for the url
     :param url: url
     :return: data - json data gotten
     """
     logging.info('Requesting for the data...')
     if url:
-        params = append_params({'token': token}, query_params)
-        res = requests.get(url, params=params)
-        if res.status_code == 200:
-            data = json.loads(res.content)
-            if data.get('ok'):
-                logging.info('Finished downloading data')
-                return data
-            else:
-                msg = data.get('error')
-                raise Exception(msg)
+        res = slack_client.api_call(url, **params)
+        data = json.loads(res)
+        if data.get('ok'):
+            logging.info('Finished downloading data')
+            return data
         else:
-            msg = 'Site down or invalid URL'
+            msg = data.get('error')
             raise Exception(msg)
     else:
         msg = 'URL cannot be None'
@@ -134,18 +116,18 @@ def request_people_data():
     :rtype: tuple
     :return: tuple - raw_staff and raw_fellow data
     """
-    token = os.getenv('TOKEN')
     # channel_id for channel with all people in a certain location
     channel_id = os.getenv('CHANNEL_ID')
     # url for group.info endpoint
-    group_url = 'https://slack.com/api/groups.info'
+    group_url = 'groups.info'
     # url for users.list endpoint
-    channel_url = 'https://slack.com/api/users.list'
+    channel_url = 'users.list'
     # extra params here
     group_params = {'channel': channel_id}
     try:
-        raw_group_data = get_data(token, group_url, group_params)
-        raw_channel_data = get_data(token, channel_url)
+        raw_group_data = get_data(group_url, group_params)
+        # no params since - {}
+        raw_channel_data = get_data(channel_url, {})
         return raw_group_data, raw_channel_data
     except requests.exceptions.MissingSchema as err:
         logging.error('Error --> {}'.format(err))
