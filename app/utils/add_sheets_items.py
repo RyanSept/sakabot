@@ -3,7 +3,7 @@ from operator import itemgetter
 from itertools import groupby
 import logging
 # import the gspread instance
-from . import gsheet as gc
+from app.utils import gsheet as gc
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 # data sheets objects. bot_sheet -> already existing bot data andela_sheet -> Andela equip data sheet
-andela_sheet = gc.open("Gathu Copy of Asset Tracker For bot").worksheet("Master  Inventory List")
+andela_sheet = gc.open("Asset Tracker For bot").worksheet("Master  Inventory List")
 
 
 def get_serial_values(sheet, col, col_value, col_num=1):
@@ -39,7 +39,7 @@ def get_serial_values(sheet, col, col_value, col_num=1):
                   in groupby(enumerate(item_cells), lambda x: x[0] - x[1])]
     cell_ranges = []
     for cell_list in cell_lists:
-        cell_range = f'{col}{cell_list[0]}:{col}{cell_list[-1]}'
+        cell_range = '{}{}:{}{}'.format(col, cell_list[0], col, cell_list[-1])
         cell_ranges.extend(sheet.range(cell_range))
 
     logging.info('{} cells found in sheet {}worksheet'.format(
@@ -100,7 +100,7 @@ def get_new_items_data(sheet, items, cols, item_label):
     for item in items:
         # Get the row number which the item is from
         item_row = item.row
-        item_owner = sheet.acell(f'{cols.get("owner")}{item_row}').value
+        item_owner = sheet.acell('{}{}'.format(cols.get("owner"), item_row)).value
 
         # check if the item has the owner value if not ignore it.
         # `owner` is a compulsory field for each `cols object`
@@ -110,7 +110,7 @@ def get_new_items_data(sheet, items, cols, item_label):
             # we already have the owner field value
             for field in [field for field in cols.keys() if field != 'owner']:
                 if cols[field]:
-                    cell = f'{cols[field]}{item_row}'
+                    cell = '{}{}'.format(cols[field], item_row)
                     items_data[item.value][field] = sheet.acell(cell).value
                 # Both item and asset_code are available hence no need to get them from sheet
                 # item is available as item_label and asset_code as the value of each item
@@ -149,7 +149,7 @@ def write_data(sheet, start_row, columns, data, col_len=4):
     # cells to update, assumes, the first column is A - "utils.rowcol_to_a1(start_row, 1)"
     range_start = utils.rowcol_to_a1(start_row, 1)
     range_end = utils.rowcol_to_a1(start_row + rows - 1, col_len)
-    cell_list = sheet.range(f'{range_start}:{range_end}')
+    cell_list = sheet.range('{}:{}'.format(range_start, range_end))
     # group all cells making up a row into their own list
     row_cels = [list(g) for _, g in groupby(cell_list, lambda cell: cell.row)]
 
@@ -315,10 +315,9 @@ def tmacs(sheet):
 
 
 def main():
-    sheet_name = "Gathu Copy of Andela Nairobi Equipments"
+    sheet_name = "Ryan Copy of Andela Nairobi Equipments"
     thunderbolts(sheet_name)
     tmac_chargers(sheet_name)
-    headsets(sheet_name)
     tmacs(sheet_name)
 
 
