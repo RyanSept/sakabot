@@ -192,7 +192,7 @@ def add_emails_and_slack_id_to_equipment_json():
     #             equipment["unmatched"] = True
     #             break
     #         for person in people_list:
-    #             if slack_id == person["id"]:
+    #             if slack_id == person["id"]: # check a good part of the name matches
     #                 equipment["owner_email"] = email
     #                 equipment["owner_slack_id"] = slack_id
     #                 match_cache[owner_name] = {
