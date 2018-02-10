@@ -1,0 +1,173 @@
+import os
+import json
+import logging
+from fuzzywuzzy import fuzz
+from app.utils import gsheet, SPREADSHEET_ID
+from app import slack_client, macbooks, chargers, thunderbolts
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s:%(levelname)s:%(message)s"
+)
+
+
+REL_PATH = '/emails.json'
+HOME_DIR = os.path.dirname(os.path.abspath(__file__))
+EMAILS_FILE = HOME_DIR + REL_PATH
+EQUIPMENT_FILE_PATH = HOME_DIR + "/equipment.json"
+MATCH_CACHE_FILE_PATH = HOME_DIR + "/match_cache.json"
+
+
+def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, people_list):
+    """
+    Add slack_id and email to each equipment item
+
+    :param equipment_list: list of equipment eg. list of macbooks
+    :param match_cache: cache of names that have been matched to slack details
+    :param people_list: list of slack users
+    :return: tuple containing equipment_list and match_cache
+    """
+    unmatched_equipment_indices = []
+    match_count = 0
+
+    for index, item in enumerate(equipment_list):
+        if not item["owner_name"]:
+            continue
+
+        owner_name = item["owner_name"] = item["owner_name"].strip(" ")
+
+        # check cached manual slack_id entries
+        if owner_name in match_cache:
+            slack_id = match_cache[owner_name]["owner_slack_id"]
+            email = match_cache[owner_name]["owner_email"]
+            match_count += 1
+            logging.info("Retrieved %s owner details from match cache",
+                         item["equipment_id"])
+            continue
+
+        # check slack user list for slack_id and email
+        logging.debug("Checking slack users.list for owner details.")
+        for person in people_list:
+            if "email" not in person["profile"]:
+                logging.debug(json.dumps(person, indent=4))
+                continue
+            person_name = person["profile"]["real_name"]
+            email = person["profile"]["email"]
+            slack_id = person["id"]
+            name_from_email = email.split("@")[0]
+
+            # run a fuzzy match of email name and slack real name
+            if fuzz.token_sort_ratio(
+                person_name.replace("'", ""),
+                owner_name.replace("'", "")) >= 100\
+                or fuzz.token_sort_ratio(
+                    name_from_email,
+                    owner_name.replace("'", "")) >= 100:
+                logging.info("100 percent match for %s owner details",
+                             item["equipment_id"])
+                item["owner_email"] = email
+                item["owner_slack_id"] = slack_id
+                match_cache[owner_name] = {
+                    "owner_slack_id": slack_id,
+                    "owner_email": email
+                }
+                match_count += 1
+                break
+
+        # if no match was found
+        if "owner_email" not in item:
+            unmatched_equipment_indices.append(index)
+
+    logging.info("Matched %s equipment items.", match_count)
+
+    if len(unmatched_equipment_indices) == 0:
+        return equipment_list, match_cache
+
+    logging.info("Unmmatched equipment indices: %s",
+                 unmatched_equipment_indices)
+    """
+    Requst manual slack id entries for equipment that we were'nt able to
+    find owner details automatically
+    """
+    print "We were unable to find matching Slack profiles for {} equipment.".format(
+        len(unmatched_equipment_indices))
+    print("Please fill in the Slack ids for the following names."
+          " If you can't find them on slack or it's not a user"
+          " that should be in the system, type 'N'")
+    print """
+    To get the Slack id of a user:
+    1. Open slack and press `cmd + shift + e`
+    2. Open the Workspace Directory and find them name.
+    3. Click on the result to open their profile
+    4. Click 'Copy member ID on the drop down menu'
+    """
+
+    # go through unmatched equipment and prompt user for manually input for each
+    dont_match_list = []
+    for i in unmatched_equipment_indices:
+        equipment = equipment_list[i]
+        owner_name = equipment["owner_name"]
+
+        # get user input for slack_id of owner of the equipment
+        while True:
+            slack_id = raw_input("Enter slack id for {}: ".format(owner_name))
+            if slack_id == "N" or slack_id == "n":
+                equipment["unmatched"] = True
+                dont_match_list.append(equipment)
+                break
+            for person in people_list:
+                if slack_id == person["id"]:
+                    equipment["owner_email"] = email
+                    equipment["owner_slack_id"] = slack_id
+                    match_cache[owner_name] = {
+                        "owner_slack_id": slack_id,
+                        "owner_email": person["profile"]["email"]
+                    }
+                    print "Successfully matched {}'s equipment".format(
+                        owner_name)
+                    break
+            else:
+                print "Unable to find slack_id '{}' on Slack".format(slack_id)
+
+            if "owner_email" in equipment:
+                break
+
+    # remove rejects
+    for equipment in dont_match_list:
+        equipment_list.remove(equipment)
+
+    return equipment_list, match_cache
+
+
+if __name__ == "__main__":
+    # fetch users list from slack
+    slack_response = slack_client.api_call('users.list')
+    if not slack_response["ok"]:
+        logging.error("Slack raised this error %s", slack_response["error"])
+
+    people_list = slack_response["members"]
+    with open(EQUIPMENT_FILE_PATH, "r") as equipment_file:
+        equipment_data = json.loads(equipment_file.read())
+
+    with open(MATCH_CACHE_FILE_PATH, "r") as match_cache_file:
+        # slack_ids that user entered manually
+        match_cache = match_cache_file.read()
+        if match_cache:
+            match_cache = json.loads(match_cache)
+        else:
+            match_cache = {}
+
+    for equipment_type in equipment_data:
+        print equipment_type
+        result = add_emails_and_slack_id_to_equipment_json(
+            equipment_data[equipment_type], match_cache,
+            people_list)
+        equipment_data[equipment_type] = result[0]
+        match_cache = result[1]
+
+    with open(EQUIPMENT_FILE_PATH, "w+") as equipment_file:
+        equipment_file.write(json.dumps(equipment_data))
+
+    with open(MATCH_CACHE_FILE_PATH, "w+") as match_cache_file:
+        match_cache_file.write(json.dumps(match_cache))
