@@ -1,6 +1,8 @@
 credentials
 # List of all emails
 emails.json
+equipment.json
+match_cache.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
