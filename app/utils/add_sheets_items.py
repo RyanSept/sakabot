@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 # import the gspread instance
 from app.utils import gsheet as gc
@@ -8,6 +9,10 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s"
 )
+
+HOME_DIR = os.path.dirname(os.path.abspath(__file__))
+EQUIPMENT_FILE = os.path.join(HOME_DIR, "equipment.json")
+
 
 def get_all_items(sheet):
     """
@@ -18,34 +23,37 @@ def get_all_items(sheet):
     :param sheet: The name of the sheet to use e.g 'Andela Asset Tracker'
     """
 
-     # Get and write thunderbolts
-    master_inventory_sheet = gc.open(sheet).worksheet("Master  Inventory List")
+    # Get and write thunderbolts
+    master_inventory_sheet = gc.open(sheet).worksheet("Master Inventory List")
 
     # get a list of all assets in the andela_sheet
     and_items = master_inventory_sheet.get_all_values()
 
     data = {
-            'macbooks': macbooks(and_items),
-            'thunderbolts': thunderbolts(and_items),
-            'chargers': mac_chargers(and_items),
-            'dongles': dongles(and_items)
+        'macbooks': macbooks(and_items),
+        'thunderbolts': thunderbolts(and_items),
+        'chargers': mac_chargers(and_items),
+        'dongles': dongles(and_items)
     }
 
     # create the equipments.json file
-    json_file = open("app/utils/assets/equipment.json", "w")
+    json_file = open(EQUIPMENT_FILE, "w+")
 
     # write the data to the equipments .json file
     json_file.write(json.dumps(data))
     json_file.close()
 
+
 def filter_items(sheet_data, device_type):
     """
     Function to filter and return a list of specific devices
-    Works by filtering the sheet data for all devices with the same description.
+    Works by filtering the sheet data for all devices with the same
+    description.
     Example:
         filter_items(andelat_sheet_data, "Thunderbolt-Ethernet adapter")
 
-    :param sheet_data: a list of the data in the andela master sheet being checked
+    :param sheet_data: a list of the data in the andela master sheet being
+    checked
     :param device_type: the device type under the description column
     :return: a lsi of the data for thunderbolts
     """
@@ -58,11 +66,12 @@ def filter_items(sheet_data, device_type):
 
     return filtered_items
 
+
 def mac_chargers(and_items):
     """ return a list of thunderbolts with values: equipment_id, owner_name"""
 
     # filter_items(and_items, asset_item)
-    logging.info('Working on the Training Macbook Chargers worksheet')
+    logging.info('Retrieving chargers')
 
     # filter_items(and_items, asset_item)
     filtered_list = filter_items(and_items, "Macbook Charger")
@@ -71,20 +80,21 @@ def mac_chargers(and_items):
     if filtered_list:
         for item in filtered_list:
             col = {
-                "equipment_id": item[2] ,
+                "equipment_id": item[2],
                 "owner_name": item[8].strip(),
             }
 
             mac_chargers_list.append(col)
 
-    logging.info('Finished Working on the Training Macbook Chargers worksheet')
+    logging.info('Retrieved %s chargers', len(mac_chargers_list))
     return mac_chargers_list
+
 
 def thunderbolts(and_items):
     """ return a list of thunderbolts with values: equipment_id, owner_name"""
 
     # filter and return a list of thunderbolts
-    logging.info('Working on the Thunderbolt worksheet')
+    logging.info('Retrieving thunderbolts')
 
     # filter_items(and_items, asset_item)
     filtered_list = filter_items(and_items, "Thunderbolt-Ethernet adapter")
@@ -94,21 +104,23 @@ def thunderbolts(and_items):
 
         for item in filtered_list:
             col = {
-                "equipment_id": item[2] ,
+                "equipment_id": item[2],
                 "owner_name": item[8].strip(),
             }
 
             thunderbolts_list.append(col)
 
-    logging.info('Finished Working on the Thunderbolts worksheet')
+    logging.info('Retrieved %s thunderbolts', len(thunderbolts_list))
     return thunderbolts_list
 
+
 def macbooks(sheet_data):
-    logging.info('Working on Macbooks')
+    logging.info('Retrieving Macbooks')
 
     # Get and dump mackbooks
     # filter_items(sheet, device_type)
     items = filter_items(sheet_data, "Training Macbook")
+    items += filter_items(sheet_data, "Company Macbook")
 
     macbook_list = []
 
@@ -122,12 +134,13 @@ def macbooks(sheet_data):
             }
 
             macbook_list.append(col)
-    
-    logging.info('Finished Working on the Training Macbooks worksheet')
+
+    logging.info('Retrieved %s macbooks', len(macbook_list))
     return macbook_list
 
+
 def dongles(sheet_data):
-    logging.info('Working on Dongles')
+    logging.info('Retrieving Dongles')
 
     # Get and dump mackbooks
     # filter_items(sheet, device_type)
@@ -138,18 +151,18 @@ def dongles(sheet_data):
     if items:
         for item in items:
             col = {
-                "equipment_id": item[2] ,
+                "equipment_id": item[2],
                 "owner_name": item[8].strip(),
             }
 
             dongle_list.append(col)
-    
-    logging.info('Finished Working on the dongles')
+
+    logging.info('Retrieved %s dongles', len(dongle_list))
     return dongle_list
 
 
 def main():
-    sheet_name = "Benjamin Copy of Asset Tracker For bot"
+    sheet_name = "Asset Tracker For bot"
     get_all_items(sheet_name)
 
 
