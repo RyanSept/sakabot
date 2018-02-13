@@ -109,6 +109,12 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
         equipment = equipment_list[i]
         owner_name = equipment["owner_name"]
 
+        # ignore equipment with these names
+        if owner_name in []:
+            equipment["unmatched"] = True
+            dont_match_list.append(equipment)
+            continue
+
         # get user input for slack_id of owner of the equipment
         while True:
             slack_id = raw_input("Enter slack id for {}: ".format(owner_name))

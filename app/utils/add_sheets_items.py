@@ -81,7 +81,7 @@ def mac_chargers(and_items):
         for item in filtered_list:
             col = {
                 "equipment_id": item[2],
-                "owner_name": item[8].strip(),
+                "owner_name": item[9].strip(),
             }
 
             mac_chargers_list.append(col)
@@ -105,7 +105,7 @@ def thunderbolts(and_items):
         for item in filtered_list:
             col = {
                 "equipment_id": item[2],
-                "owner_name": item[8].strip(),
+                "owner_name": item[9].strip(),
             }
 
             thunderbolts_list.append(col)
@@ -129,8 +129,8 @@ def macbooks(sheet_data):
             col = {
                 "equipment_id": item[2],
                 "serial_number": item[6],
-                "owner_name": item[8].strip(),
-                "owner_cohort": item[9].strip()
+                "owner_name": item[9].strip(),
+                "owner_cohort": item[10].strip()
             }
 
             macbook_list.append(col)
@@ -152,7 +152,7 @@ def dongles(sheet_data):
         for item in items:
             col = {
                 "equipment_id": item[2],
-                "owner_name": item[8].strip(),
+                "owner_name": item[9].strip(),
             }
 
             dongle_list.append(col)
