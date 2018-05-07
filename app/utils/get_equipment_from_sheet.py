@@ -24,7 +24,7 @@ def get_all_items(sheet):
     """
 
     # Get and write thunderbolts
-    master_inventory_sheet = gc.open(sheet).worksheet("Master Inventory List")
+    master_inventory_sheet = sheet.worksheet("Master Inventory List")
 
     # get a list of all assets in the andela_sheet
     and_items = master_inventory_sheet.get_all_values()
@@ -162,8 +162,9 @@ def dongles(sheet_data):
 
 
 def main():
-    sheet_name = "Asset Tracker For bot"
-    get_all_items(sheet_name)
+    sheet_name = "Asset Sheet"
+    sheet = gc.open(sheet_name)
+    get_all_items(sheet)
 
 
 if __name__ == '__main__':
