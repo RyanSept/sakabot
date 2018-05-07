@@ -1,3 +1,12 @@
+"""
+This script fetches tmacs, thunderbolts, dongles and chargers from the asset
+spreadsheet and writes them to the equipment.json file. It dumps unmatched 
+equipment i.e equipment that's yet to be matched to owner details such as
+email and slack id. The next script to call after this one is the
+match_equipment_to_owner.py script which should add the owner details from
+slack.
+"""
+
 import json
 import logging
 import os
@@ -79,6 +88,8 @@ def mac_chargers(and_items):
 
     if filtered_list:
         for item in filtered_list:
+            if not item[2] or not item[9]:
+                continue
             col = {
                 "equipment_id": item[2],
                 "owner_name": item[9].strip(),
@@ -103,6 +114,8 @@ def thunderbolts(and_items):
     if filtered_list:
 
         for item in filtered_list:
+            if not item[2] or not item[9]:
+                continue
             col = {
                 "equipment_id": item[2],
                 "owner_name": item[9].strip(),
@@ -126,6 +139,8 @@ def macbooks(sheet_data):
 
     if items:
         for item in items:
+            if not item[2] or not item[9]:
+                continue
             col = {
                 "equipment_id": item[2],
                 "serial_number": item[6],
@@ -150,6 +165,8 @@ def dongles(sheet_data):
 
     if items:
         for item in items:
+            if not item[2] or not item[9]:
+                continue
             col = {
                 "equipment_id": item[2],
                 "owner_name": item[9].strip(),

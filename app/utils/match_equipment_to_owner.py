@@ -1,10 +1,21 @@
+"""
+This script is to be called after get_equipment_from_sheet.py.
+It solves the problem of identifying an equipment owner. Our user details
+database is slack. Equipment owner names in the equipment store are
+ unstandardized (a different name is used in the sheet from the one on slack)
+or may contain errors. Our first approach is to try finding a slack user by the
+given name. If that works out we celebrate the match and cache that,
+ otherwise we store that and at the end of the matching process, we ask for
+manual entry of the user info. These manual entries are also added to the
+ owner details cache for reuse. This cache contains the unstandardized user
+ name (as they are in the spreadsheet) as the key and slack user details as the
+ value.
+"""
 import os
 import json
 import logging
+from app import slack_client
 from fuzzywuzzy import fuzz
-from app.utils import gsheet, SPREADSHEET_ID
-from app import slack_client, macbooks, chargers, thunderbolts
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,17 +27,17 @@ REL_PATH = '/emails.json'
 HOME_DIR = os.path.dirname(os.path.abspath(__file__))
 EMAILS_FILE = HOME_DIR + REL_PATH
 EQUIPMENT_FILE_PATH = HOME_DIR + "/equipment.json"
-MATCH_CACHE_FILE_PATH = HOME_DIR + "/match_cache.json"
+OWNER_DETAILS_CACHE_FILE_PATH = HOME_DIR + "/name_to_owner_details_cache.json"
 
 
-def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, people_list):
+def add_emails_and_slack_id_to_equipment_json(equipment_list, owner_details_cache, people_list):
     """
     Add slack_id and email to each equipment item
 
     :param equipment_list: list of equipment eg. list of macbooks
-    :param match_cache: cache of names that have been matched to slack details
+    :param owner_details_cache: cache of names that have been matched to slack details
     :param people_list: list of slack users
-    :return: tuple containing equipment_list and match_cache
+    :return: tuple containing equipment_list and owner_details_cache
     """
     unmatched_equipment_indices = []
     match_count = 0
@@ -37,10 +48,12 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
 
         owner_name = item["owner_name"] = item["owner_name"].strip(" ")
 
-        # check cached manual slack_id entries
-        if owner_name in match_cache:
-            slack_id = match_cache[owner_name]["owner_slack_id"]
-            email = match_cache[owner_name]["owner_email"]
+        # check cached owner_details
+        if owner_name in owner_details_cache:
+            slack_id = owner_details_cache[owner_name]["owner_slack_id"]
+            email = owner_details_cache[owner_name]["owner_email"]
+            item["owner_email"] = email
+            item["owner_slack_id"] = slack_id
             match_count += 1
             logging.info("Retrieved %s owner details from match cache",
                          item["equipment_id"])
@@ -68,7 +81,9 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
                              item["equipment_id"])
                 item["owner_email"] = email
                 item["owner_slack_id"] = slack_id
-                match_cache[owner_name] = {
+
+                # add to cache
+                owner_details_cache[owner_name] = {
                     "owner_slack_id": slack_id,
                     "owner_email": email
                 }
@@ -82,7 +97,7 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
     logging.info("Matched %s equipment items.", match_count)
 
     if len(unmatched_equipment_indices) == 0:
-        return equipment_list, match_cache
+        return equipment_list, owner_details_cache
 
     logging.info("Unmmatched equipment indices: %s",
                  unmatched_equipment_indices)
@@ -103,7 +118,7 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
     4. Click 'Copy member ID on the drop down menu'
     """
 
-    # go through unmatched equipment and prompt user for manually input for each
+    # go through unmatched equipment and prompt user to manually input for each
     dont_match_list = []
     for i in unmatched_equipment_indices:
         equipment = equipment_list[i]
@@ -126,7 +141,7 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
                 if slack_id == person["id"]:
                     equipment["owner_email"] = email
                     equipment["owner_slack_id"] = slack_id
-                    match_cache[owner_name] = {
+                    owner_details_cache[owner_name] = {
                         "owner_slack_id": slack_id,
                         "owner_email": person["profile"]["email"]
                     }
@@ -143,7 +158,7 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, match_cache, peopl
     for equipment in dont_match_list:
         equipment_list.remove(equipment)
 
-    return equipment_list, match_cache
+    return equipment_list, owner_details_cache
 
 
 if __name__ == "__main__":
@@ -156,24 +171,24 @@ if __name__ == "__main__":
     with open(EQUIPMENT_FILE_PATH, "r") as equipment_file:
         equipment_data = json.loads(equipment_file.read())
 
-    with open(MATCH_CACHE_FILE_PATH, "r") as match_cache_file:
+    with open(OWNER_DETAILS_CACHE_FILE_PATH, "r") as owner_details_cache_file:
         # slack_ids that user entered manually
-        match_cache = match_cache_file.read()
-        if match_cache:
-            match_cache = json.loads(match_cache)
+        owner_details_cache = owner_details_cache_file.read()
+        if owner_details_cache:
+            owner_details_cache = json.loads(owner_details_cache)
         else:
-            match_cache = {}
+            owner_details_cache = {}
 
     for equipment_type in equipment_data:
         print equipment_type
         result = add_emails_and_slack_id_to_equipment_json(
-            equipment_data[equipment_type], match_cache,
+            equipment_data[equipment_type], owner_details_cache,
             people_list)
         equipment_data[equipment_type] = result[0]
-        match_cache = result[1]
+        owner_details_cache = result[1]
 
     with open(EQUIPMENT_FILE_PATH, "w+") as equipment_file:
         equipment_file.write(json.dumps(equipment_data))
 
-    with open(MATCH_CACHE_FILE_PATH, "w+") as match_cache_file:
-        match_cache_file.write(json.dumps(match_cache))
+    with open(OWNER_DETAILS_CACHE_FILE_PATH, "w+") as owner_details_cache_file:
+        owner_details_cache_file.write(json.dumps(owner_details_cache))
