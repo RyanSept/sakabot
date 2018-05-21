@@ -10,9 +10,11 @@ slack.
 import json
 import logging
 import os
+import sys
 
 # import the gspread instance
 from app.utils import gsheet as gc
+from app.config import ASSET_SPREADSHEET_KEY
 
 logging.basicConfig(
     level=logging.INFO,
@@ -91,7 +93,7 @@ def mac_chargers(and_items):
             if not item[2] or not item[9]:
                 continue
             col = {
-                "equipment_id": item[2],
+                "equipment_id": item[2].upper(),
                 "owner_name": item[9].strip(),
             }
 
@@ -117,7 +119,7 @@ def thunderbolts(and_items):
             if not item[2] or not item[9]:
                 continue
             col = {
-                "equipment_id": item[2],
+                "equipment_id": item[2].upper(),
                 "owner_name": item[9].strip(),
             }
 
@@ -142,7 +144,7 @@ def macbooks(sheet_data):
             if not item[2] or not item[9]:
                 continue
             col = {
-                "equipment_id": item[2],
+                "equipment_id": item[2].upper(),
                 "serial_number": item[6],
                 "owner_name": item[9].strip(),
                 "owner_cohort": item[10].strip()
@@ -168,7 +170,7 @@ def dongles(sheet_data):
             if not item[2] or not item[9]:
                 continue
             col = {
-                "equipment_id": item[2],
+                "equipment_id": item[2].upper(),
                 "owner_name": item[9].strip(),
             }
 
@@ -179,8 +181,10 @@ def dongles(sheet_data):
 
 
 def main():
-    sheet_name = "Asset Sheet"
-    sheet = gc.open(sheet_name)
+    if ASSET_SPREADSHEET_KEY is None:
+        print("ASSET_SPREADSHEET_KEY not found in configs. Aborted.")
+        sys.exit()
+    sheet = gc.open_by_key(sheet_key)
     get_all_items(sheet)
 
 

@@ -105,18 +105,18 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, owner_details_cach
     Requst manual slack id entries for equipment that we were'nt able to
     find owner details automatically
     """
-    print "We were unable to find matching Slack profiles for {} equipment.".format(
-        len(unmatched_equipment_indices))
+    print("We were unable to find matching Slack profiles for {} equipment.".format(
+        len(unmatched_equipment_indices)))
     print("Please fill in the Slack ids for the following names."
           " If you can't find them on slack or it's not a user"
           " that should be in the system, type 'N'")
-    print """
+    print("""
     To get the Slack id of a user:
     1. Open slack and press `cmd + shift + e`
     2. Open the Workspace Directory and find them name.
     3. Click on the result to open their profile
     4. Click 'Copy member ID on the drop down menu'
-    """
+    """)
 
     # go through unmatched equipment and prompt user to manually input for each
     dont_match_list = []
@@ -132,7 +132,7 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, owner_details_cach
 
         # get user input for slack_id of owner of the equipment
         while True:
-            slack_id = raw_input("Enter slack id for {}: ".format(owner_name))
+            slack_id = input("Enter slack id for {}: ".format(owner_name))
             if slack_id == "N" or slack_id == "n":
                 equipment["unmatched"] = True
                 dont_match_list.append(equipment)
@@ -145,11 +145,11 @@ def add_emails_and_slack_id_to_equipment_json(equipment_list, owner_details_cach
                         "owner_slack_id": slack_id,
                         "owner_email": person["profile"]["email"]
                     }
-                    print "Successfully matched {}'s equipment".format(
-                        owner_name)
+                    print("Successfully matched {}'s equipment".format(
+                        owner_name))
                     break
             else:
-                print "Unable to find slack_id '{}' on Slack".format(slack_id)
+                print("Unable to find slack_id '{}' on Slack".format(slack_id))
 
             if "owner_email" in equipment:
                 break
@@ -180,7 +180,7 @@ if __name__ == "__main__":
             owner_details_cache = {}
 
     for equipment_type in equipment_data:
-        print equipment_type
+        print(equipment_type)
         result = add_emails_and_slack_id_to_equipment_json(
             equipment_data[equipment_type], owner_details_cache,
             people_list)
