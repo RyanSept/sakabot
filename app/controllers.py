@@ -1,5 +1,8 @@
+"""
+This file contains controllers which process events we receive through the bot.
+"""
 from app.models import find_equipment_by_id, find_equipment_by_owner_id
-from app.helpers import build_search_reply_atachment
+from app.helpers import build_search_reply_atachment, generate_random_hex_color
 import re
 
 EQUIPMENT_TYPE_CANONICAL_NAME = {}
@@ -98,7 +101,27 @@ class MessageHandler:
         return Response("No problemo", "RESPONSE_GRATITUDE")
 
     def help_reply(self, message):
-        return Response("HELP< YOU'RE GONNA NEED SOMEBODY!", "RESPONSE_HELP")
+        text = "Sakabot helps you find owners of equipment like"\
+            " macbooks, dongles, thunderbolts and chargers. To get started, "\
+            "try sending `find TB/0051` or `find my dongle` if you own"\
+            " one. Sakabot works both via a channel mention or via dm:wink:."
+        attachments = [
+            {
+                "title": "Searching for an item's owner",
+                "text": "You can search for an item's owner by "
+                "sending _find <item_id>_ to _@sakabot_.\n\n eg. "
+                "`find AND/DONGLE/123`"
+            },
+            {
+                "title": "Check the id of items of an owner",
+                "text": "To check what item an owner has, send "
+                "_find <\@mention|my> <mac|charger|dongle|thunderbolt>_ "
+                "to _@sakabot_.\n\n eg. `find my dongle` or "
+                "`find @johndoe thunderbolt`"
+            }
+        ]
+        return Response(text, "RESPONSE_HELP",
+                        attachments=attachments)
 
     def default_reply(self, message):
         return Response("Sorry but I didn't understand you."
