@@ -1,6 +1,6 @@
 """
 This file contains a modified version of the SlackEventAdapter and SlackServer
-provided by the SlackEventsApi lib. We add async event handling
+provided by the SlackEventsApi lib. We event handling asynchronous.
 """
 from slackeventsapi import SlackEventAdapter, SlackServer
 from flask import request, make_response

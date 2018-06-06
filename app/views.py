@@ -1,3 +1,8 @@
+"""
+This file contains the views for the bot which are really just event handlers
+to different slack event types.
+"""
+
 from app import slack_events_adapter, slack_client, huey
 from huey import crontab
 from app.config import HOME_DIR
@@ -12,6 +17,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 message_handler = MessageHandler()
 
+# loading messages
 loading_messages = json.loads(open(HOME_DIR + "/utils/fortunes.json", "r").
                               read())
 
@@ -27,9 +33,9 @@ def handle_message_event(event_data):
     response = message_handler.respond_to(message)
     logger.debug(response)
     if response.response_type == "RESPONSE_SEARCH_EQUIPMENT":
-        time.sleep(0.5)
         post_message(message["channel"],
                      f"{random.choice(loading_messages)['quote']}")
+        time.sleep(0.5)
 
     logger.info(f"Sending {response.response_type} response to slack.")
     post_message(message["channel"], response.text,
