@@ -1,15 +1,7 @@
 """
 This script is to be called after get_equipment_from_sheet.py.
 It solves the problem of identifying an equipment owner. Our user details
-database is slack. Equipment owner names in the equipment store are
- unstandardized (a different name is used in the sheet from the one on slack)
-or may contain errors. Our first approach is to try finding a slack user by the
-given name. If that works out we celebrate the match and cache that,
- otherwise we store that and at the end of the matching process, we ask for
-manual entry of the user info. These manual entries are also added to the
- owner details cache for reuse. This cache contains the unstandardized user
- name (as they are in the spreadsheet) as the key and slack user details as the
- value.
+database is slack.
 """
 import os
 import json

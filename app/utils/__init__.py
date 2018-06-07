@@ -7,7 +7,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 REL_PATH = '/credentials/sakabot-cred.json'
 HOME_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_SECRET_FILE = HOME_DIR + REL_PATH
-SPREADSHEET_ID = "19kvSslth-bCy0TaChIAYez1_AT1viIafYwWFwEhXhnA"
 SCOPE = ['https://spreadsheets.google.com/feeds',
          "https://www.googleapis.com/auth/spreadsheets"]
 

@@ -1,10 +1,6 @@
 """
 This script fetches tmacs, thunderbolts, dongles and chargers from the asset
-spreadsheet and writes them to the equipment.json file. It dumps unmatched 
-equipment i.e equipment that's yet to be matched to owner details such as
-email and slack id. The next script to call after this one is the
-match_equipment_to_owner.py script which should add the owner details from
-slack.
+spreadsheet and writes them to the equipment.json file.
 """
 
 import json
@@ -184,7 +180,7 @@ def main():
     if ASSET_SPREADSHEET_KEY is None:
         print("ASSET_SPREADSHEET_KEY not found in configs. Aborted.")
         sys.exit()
-    sheet = gc.open_by_key(sheet_key)
+    sheet = gc.open_by_key(ASSET_SPREADSHEET_KEY)
     get_all_items(sheet)
 
 
