@@ -3,6 +3,7 @@ This file contains controllers which process events we receive through the bot.
 """
 from app.models import find_equipment_by_id, find_equipment_by_owner_id
 from app.helpers import build_search_reply_atachment, generate_random_hex_color
+from app.config import ADMIN_SLACK_ID
 import re
 
 EQUIPMENT_TYPE_CANONICAL_NAME = {}
@@ -121,6 +122,11 @@ class MessageHandler:
                 "_find < @mention|my > <mac|charger|dongle|thunderbolt>_ "
                 "\n\n eg. `find my dongle` or "
                 "`find @johndoe thunderbolt`"
+            },
+            {
+                "title": "Send feedback",
+                "text": f"If you have any feedback you'd like to share,"
+                f" drop a message to <@{ADMIN_SLACK_ID}>"
             }
         ]
         return Response(text, "RESPONSE_HELP",

@@ -7,6 +7,5 @@ import logging
 
 
 if __name__ == "__main__":
-    # logging.basicConfig(filename="example.log", level=logging.DEBUG)
     huey.start()
     slack_events_adapter.start(port=5000, debug=True)
