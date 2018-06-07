@@ -117,8 +117,8 @@ class MessageHandler:
                 "`find AND/DONGLE/123`"
             },
             {
-                "title": "Check the id of items of an owner",
-                "text": "To check what item an owner has, send \n"
+                "title": "Check the ownership information of an item",
+                "text": "Check ownership information for an item by sending \n"
                 "_find < @mention|my > <mac|charger|dongle|thunderbolt>_ "
                 "\n\n eg. `find my dongle` or "
                 "`find @johndoe thunderbolt`"
