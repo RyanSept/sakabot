@@ -51,7 +51,9 @@ class MessageHandler:
         return self.default_reply(message)
 
     def hello_reply(self, message):
-        return Response(f"Hello <@{message['user']}>! :tada:",
+        return Response(f"Hello <@{message['user']}>! :tada:. I'm here to "
+                        "help you find equipment owner information. Send "
+                        "`help` to learn more.",
                         "RESPONSE_GREETING")
 
     def search_equipment_reply(self, message, equipment_id):
@@ -101,22 +103,23 @@ class MessageHandler:
         return Response("No problemo", "RESPONSE_GRATITUDE")
 
     def help_reply(self, message):
-        text = "Sakabot helps you find owners of equipment like"\
-            " macbooks, dongles, thunderbolts and chargers. To get started, "\
-            "try sending `find TB/0051` or `find my dongle` if you own"\
-            " one. Sakabot works both via a channel mention or via dm:wink:."
+        text = "Hello :wave:. I can help you find owner information for"\
+            " equipment like macbooks, dongles, thunderbolts and chargers. "\
+            "To get started, try sending `find TB/0051` or "\
+            "`find my dongle` if you own one. I work both via a channel "\
+            "mention or dm:wink:."
         attachments = [
             {
                 "title": "Searching for an item's owner",
                 "text": "You can search for an item's owner by "
-                "sending _find <item_id>_ to _@sakabot_.\n\n eg. "
+                "sending _find <item_id>_.\n\n eg. "
                 "`find AND/DONGLE/123`"
             },
             {
                 "title": "Check the id of items of an owner",
-                "text": "To check what item an owner has, send "
-                "_find <\@mention|my> <mac|charger|dongle|thunderbolt>_ "
-                "to _@sakabot_.\n\n eg. `find my dongle` or "
+                "text": "To check what item an owner has, send \n"
+                "_find < @mention|my > <mac|charger|dongle|thunderbolt>_ "
+                "\n\n eg. `find my dongle` or "
                 "`find @johndoe thunderbolt`"
             }
         ]
