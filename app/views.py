@@ -51,7 +51,7 @@ def handle_mention(event_data):
     message = event_data["event"]
 
     # Remove mention from message.
-    message["text"] = re.sub(r"\s?<@.*>\s?", "", message.get("text"))
+    message["text"] = re.sub(r"!find\s?<@.*>\s?", "", message.get("text"))
     response = message_handler.respond_to(message)
     logger.info(f"Sending {response.response_type} response to slack.")
     post_message(message["channel"], response.text,
