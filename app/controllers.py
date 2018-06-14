@@ -114,14 +114,18 @@ class MessageHandler:
                 "title": "Searching for an item's owner",
                 "text": "You can search for an item's owner by "
                 "sending _find <item_id>_.\n\n eg. "
-                "`find AND/DONGLE/123`"
+                "`find AND/DONGLE/123`\n"
+                "Note: For channel requests, you have to mention me in the"
+                "message"
             },
             {
                 "title": "Check the ownership information of an item",
                 "text": "Check ownership information for an item by sending \n"
                 "_find < @mention|my > <mac|charger|dongle|thunderbolt>_ "
                 "\n\n eg. `find my dongle` or "
-                "`find @johndoe thunderbolt`"
+                "`find @johndoe thunderbolt`\n"
+                "Note: For channel requests, you have to mention me in the"
+                "message"
             },
             {
                 "title": "Send feedback",
@@ -134,7 +138,7 @@ class MessageHandler:
 
     def default_reply(self, message):
         return Response("Sorry but I didn't understand you."
-                        " Try sending `help`.", "RESPONSE_DEFAULT")
+                        " Try requesting `help`.", "RESPONSE_DEFAULT")
 
 
 class Response:
