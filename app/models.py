@@ -1,4 +1,5 @@
 from app.config import HOME_DIR
+import jmespath
 import json
 
 all_equipment = json.loads(open(HOME_DIR + "/utils/equipment.json", "r").
@@ -14,9 +15,8 @@ def find_equipment_by_id(id_, equipment_type):
     :return: dict of found equipment or None if no equipment by that id is
     found
     """
-    for equipment in all_equipment[equipment_type]:
-        if equipment["equipment_id"] == id_:
-            return equipment
+    return jmespath.search(f"{equipment_type}[?equipment_id=='{id_}']",
+                           all_equipment)
 
 
 def find_equipment_by_owner_id(owner_id, equipment_type):
@@ -28,6 +28,5 @@ def find_equipment_by_owner_id(owner_id, equipment_type):
     :return: dict of found equipment or None if no equipment by that id is
     found
     """
-    for equipment in all_equipment[equipment_type]:
-        if equipment["owner_slack_id"] == owner_id:
-            return equipment
+    return jmespath.search(f"{equipment_type}[?owner_slack_id=='{owner_id}']",
+                           all_equipment)

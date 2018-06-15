@@ -2,7 +2,7 @@
 This file contains controllers which process events we receive through the bot.
 """
 from app.models import find_equipment_by_id, find_equipment_by_owner_id
-from app.helpers import build_search_reply_atachment, generate_random_hex_color
+from app.helpers import build_search_equipment_attachment, generate_random_hex_color
 from app.config import ADMIN_SLACK_ID
 import re
 
@@ -59,20 +59,22 @@ class MessageHandler:
 
     def search_equipment_reply(self, message, equipment_id):
         equipment_id = equipment_id.upper().strip()
-        equipment = None
+        equipment_list = None
 
         for equipment_store in ["dongles", "chargers", "macbooks",
                                 "thunderbolts"]:
-            equipment = find_equipment_by_id(equipment_id, equipment_store)
-            if equipment is not None:
+            equipment_list = find_equipment_by_id(
+                equipment_id, equipment_store)
+            if equipment_list:
                 break
 
-        if equipment is None:
+        if not equipment_list:
             return Response("Sorry. I did not find any equipment by that "
                             "id :slightly_frowning_face:",
                             "RESPONSE_SEARCH_EQUIPMENT")
-        attachments = build_search_reply_atachment(equipment,
-                                                   equipment_store)
+        attachments = [build_search_equipment_attachment(equipment,
+                                                    equipment_store)
+                       for equipment in equipment_list]
         return Response("", "RESPONSE_SEARCH_EQUIPMENT",
                         attachments=attachments)
 
@@ -85,14 +87,15 @@ class MessageHandler:
             owner_id = owner_id[owner_id.index("<@") + 2: owner_id.index(">")]
         equipment_type = EQUIPMENT_TYPE_CANONICAL_NAME[equipment_type]
 
-        equipment = find_equipment_by_owner_id(owner_id, equipment_type)
-        if equipment is None:
+        equipment_list = find_equipment_by_owner_id(owner_id, equipment_type)
+        if not equipment_list:
             return Response(f"Sorry. I did not find any {equipment_type}"
                             f" belonging to <@{owner_id}> "
                             ":slightly_frowning_face:",
                             "RESPONSE_SEARCH_EQUIPMENT")
-        attachments = build_search_reply_atachment(equipment,
-                                                   equipment_type)
+        attachments = [build_search_equipment_attachment(equipment,
+                                                    equipment_type)
+                       for equipment in equipment_list]
 
         return Response("", "RESPONSE_SEARCH_EQUIPMENT",
                         attachments=attachments)

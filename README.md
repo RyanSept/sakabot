@@ -32,7 +32,9 @@ the spreadsheet with that email. See app.utils/README.md for documentation on th
 
 ### Deployment
 To deploy to Heroku, you can push to heroku with the following commands.
+Be sure to be careful to have the deploy branch have ONLY one remote that points to heroku.
 
 ```
+$ git checkout deploy
 $ git push heroku deploy:master
 ```

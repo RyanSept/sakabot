@@ -9,14 +9,14 @@ def generate_random_hex_color():
     return ('#%02X%02X%02X' % (r(), r(), r()))
 
 
-def build_search_reply_atachment(equipment, equipment_type):
+def build_search_equipment_attachment(equipment, equipment_type):
     '''
     Returns a slack attachment to show a result
     :param equipment: equipment object
     :param equipment_type: type of equipment eg. dongle, thunderbolt, macbook
     :return: dict attachment to send in slack response
     '''
-    return [{
+    return {
         "text": f"{equipment['owner_name']}'s {equipment_type[:-1]}",
         "fallback": f"Equipment ID - {equipment['equipment_id']} | Owner - {equipment['owner_name']}",
         "color": generate_random_hex_color(),
@@ -31,7 +31,7 @@ def build_search_reply_atachment(equipment, equipment_type):
             "short": "true"
         }
         ]
-    }]
+    }
 
 
 # deprecated
