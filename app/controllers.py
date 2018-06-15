@@ -118,7 +118,7 @@ class MessageHandler:
                 "text": "You can search for an item's owner by "
                 "sending _find <item_id>_.\n\n eg. "
                 "`find AND/DONGLE/123`\n"
-                "Note: For channel requests, you have to mention me in the"
+                "Note: For channel requests, you have to mention me in the "
                 "message"
             },
             {
@@ -127,7 +127,7 @@ class MessageHandler:
                 "_find < @mention|my > <mac|charger|dongle|thunderbolt>_ "
                 "\n\n eg. `find my dongle` or "
                 "`find @johndoe thunderbolt`\n"
-                "Note: For channel requests, you have to mention me in the"
+                "Note: For channel requests, you have to mention me in the "
                 "message"
             },
             {
