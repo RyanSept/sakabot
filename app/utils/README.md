@@ -14,6 +14,10 @@ To match equipment to owners, run:
 
 `$ python -m app.utils.match_equipment_to_owner`
 
+To run both of them at once:
+`$ python -m app.utils.get_equipment_from_sheet && python -m app.utils.match_equipment_to_owner`
+
+
 
 ## get_equipment_from_sheet.py
 This script fetches tmacs, thunderbolts, dongles and chargers from the asset
