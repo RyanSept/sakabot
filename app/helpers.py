@@ -5,19 +5,25 @@ def generate_random_hex_color():
     '''
     Generate random hex color
     '''
-    r = lambda: random.randint(0, 255)
+    def r(): return random.randint(0, 255)
     return ('#%02X%02X%02X' % (r(), r(), r()))
 
 
-def build_search_equipment_attachment(equipment, equipment_type):
+def build_search_equipment_attachment(equipment, equipment_type,
+                                      add_notify_owner_btn=False):
     '''
     Returns a slack attachment to show a result
     :param equipment: equipment object
     :param equipment_type: type of equipment eg. dongle, thunderbolt, macbook
+    :param add_notify_owner_btn: <optional> add a notify owner button to the
+    result
     :return: dict attachment to send in slack response
     '''
-    return {
-        "text": f"{equipment['owner_name']}'s {equipment_type[:-1]}",
+    # equipment_type is in canonical form (plural)
+    # so we get everything up to the last letter
+    equipment_type = equipment_type[:-1]
+    attachment = {
+        "text": f"{equipment['owner_name']}'s {equipment_type}",
         "fallback": f"Equipment ID - {equipment['equipment_id']} | Owner - {equipment['owner_name']}",
         "color": generate_random_hex_color(),
         "fields": [{
@@ -32,6 +38,26 @@ def build_search_equipment_attachment(equipment, equipment_type):
         }
         ]
     }
+    if add_notify_owner_btn:
+        attachment.update(
+            {
+                "callback_id": "notify_owner",
+                "actions": [
+                    {
+                        "name": "notify_owner",
+                        "text": "Notify the owner you have their equipment",
+                        "type": "button",
+                        "value": equipment,
+                        "confirm": {
+                            "title": "Are you sure?",
+                            "text": f"Clicking 'Yes' will send a message to "
+                            f"{equipment['owner_name']} "
+                            f"telling them you found their {equipment_type}.",
+                            "ok_text": "Yes",
+                            "dismiss_text": "No"
+                        }
+                    }]})
+    return attachment
 
 
 # deprecated

@@ -61,6 +61,7 @@ class MessageHandler:
         equipment_id = equipment_id.upper().strip()
         equipment_list = None
 
+        # search
         for equipment_store in ["dongles", "chargers", "macbooks",
                                 "thunderbolts"]:
             equipment_list = find_equipment_by_id(
@@ -68,13 +69,23 @@ class MessageHandler:
             if equipment_list:
                 break
 
+        # build response
         if not equipment_list:
             return Response("Sorry. I did not find any equipment by that "
                             "id :slightly_frowning_face:",
                             "RESPONSE_SEARCH_EQUIPMENT")
-        attachments = [build_search_equipment_attachment(equipment,
-                                                    equipment_store)
-                       for equipment in equipment_list]
+
+        attachments = []
+        for equipment in equipment_list:
+            """
+            Add the notify_owner button if the equipmnet doesn't belong to
+            the current requesting user
+            """
+            add_notify_owner_btn = not (equipment["owner_slack_id"] ==
+                                        message["user"])
+            attachments.append(
+                build_search_equipment_attachment(equipment, equipment_store,
+                                                  add_notify_owner_btn))
         return Response("", "RESPONSE_SEARCH_EQUIPMENT",
                         attachments=attachments)
 
@@ -94,7 +105,7 @@ class MessageHandler:
                             ":slightly_frowning_face:",
                             "RESPONSE_SEARCH_EQUIPMENT")
         attachments = [build_search_equipment_attachment(equipment,
-                                                    equipment_type)
+                                                         equipment_type)
                        for equipment in equipment_list]
 
         return Response("", "RESPONSE_SEARCH_EQUIPMENT",
@@ -134,7 +145,7 @@ class MessageHandler:
                 "title": "Send feedback",
                 "text": f"If you have any feedback you'd like to share,"
                 f" drop a message to <@{ADMIN_SLACK_ID}>"
-            }
+            },
         ]
         return Response(text, "RESPONSE_HELP",
                         attachments=attachments)
