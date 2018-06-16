@@ -2,7 +2,7 @@
 This file contains the views for the bot which are really just event handlers
 to different slack event types.
 """
-
+from flask import request
 from app import slack_events_adapter, slack_client, huey
 from huey import crontab
 from app.config import HOME_DIR
@@ -56,6 +56,15 @@ def handle_mention(event_data):
     logger.info(f"Sending {response.response_type} response to slack.")
     post_message(message["channel"], response.text,
                  attachments=response.attachments)
+
+
+@slack_events_adapter.server.route("/interactive", methods=["POST"])
+def handle_interactive_message():
+    payload = json.loads(request.form["payload"])
+    print(payload)
+    if payload["callback_id"] == "notify_owner":
+        pass
+    return ""
 
 
 def post_message(channel, message, attachments=None):
