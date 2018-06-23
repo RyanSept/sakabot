@@ -1,5 +1,11 @@
+from app.config import HOME_DIR
 import random
 import json
+
+
+# loading messages
+fortunes = json.loads(open(HOME_DIR + "/utils/fortunes.json", "r").
+                      read())
 
 
 def generate_random_hex_color():
@@ -60,6 +66,10 @@ def build_search_equipment_attachment(equipment, equipment_type,
                         }
                     }]})
     return attachment
+
+
+def generate_random_fortune():
+    return random.choice(fortunes)['quote']
 
 
 # deprecated

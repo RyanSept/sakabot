@@ -2,7 +2,8 @@
 This file contains controllers which process events we receive through the bot.
 """
 from app.models import find_equipment_by_id, find_equipment_by_owner_id
-from app.helpers import build_search_equipment_attachment, generate_random_hex_color
+from app.helpers import build_search_equipment_attachment,\
+    generate_random_hex_color, generate_random_fortune
 from app.config import ADMIN_SLACK_ID
 import re
 
@@ -31,6 +32,7 @@ class MessageHandler:
             "love": self.love_reply,
             "thanks|thank": self.gratitude_reply,
             "help": self.help_reply,
+            "fortune": self.fortune_reply,
         }
 
     def respond_to(self, message):
@@ -53,8 +55,9 @@ class MessageHandler:
 
     def hello_reply(self, message):
         return Response(f"Hello <@{message['user']}>! :tada:. I'm here to "
-                        "help you find equipment owner information. Send "
-                        "`help` to learn more.",
+                        "help you find equipment owner information. Type "
+                        "`help` to learn more. I'll respond in private to"
+                        " avoid making too much noise.",
                         "RESPONSE_GREETING")
 
     def search_equipment_reply(self, message, equipment_id):
@@ -122,7 +125,8 @@ class MessageHandler:
             " equipment like macbooks, dongles, thunderbolts and chargers. "\
             "To get started, try sending `find TB/0051` or "\
             "`find my dongle` if you own one. I work both via a channel "\
-            "mention or dm:wink:."
+            "mention or dm:wink:. If spoken to on a public channel, most of "\
+            "my responses will be in private to avoid making too much noise."
         attachments = [
             {
                 "title": "Searching for an item's owner",
@@ -142,13 +146,23 @@ class MessageHandler:
                 "message"
             },
             {
+                "title": "Get a fortune (without the cookie)",
+                "text": "You can get a wry, weird, wonderful or worrying"
+                " fortune :fortune_cookie: from our database of 10,000+ "
+                "fortunes by sending `fortune` to Sakabot"
+            },
+            {
                 "title": "Send feedback",
-                "text": f"If you have any feedback you'd like to share,"
-                f" drop a message to <@{ADMIN_SLACK_ID}>"
+                "text": f"If you have any feedback you'd like to share or bugs"
+                f" to report, please drop a message to <@{ADMIN_SLACK_ID}>"
             },
         ]
         return Response(text, "RESPONSE_HELP",
                         attachments=attachments)
+
+    def fortune_reply(self, message):
+        return Response(generate_random_fortune(),
+                        "RESPONSE_FORTUNE")
 
     def default_reply(self, message):
         return Response("Sorry but I didn't understand you."

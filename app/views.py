@@ -5,8 +5,8 @@ to different slack event types.
 from flask import request
 from app import slack_events_adapter, slack_client, huey, logger
 from huey import crontab
-from app.config import HOME_DIR
 from app.controllers import MessageHandler
+from app.helpers import generate_random_fortune
 from functools import wraps
 import re
 import json
@@ -15,10 +15,6 @@ import time
 
 
 message_handler = MessageHandler()
-
-# loading messages
-loading_messages = json.loads(open(HOME_DIR + "/utils/fortunes.json", "r").
-                              read())
 
 
 @slack_events_adapter.on("message")
@@ -33,7 +29,7 @@ def handle_message_event(event_data):
     logger.debug(response)
     if response.response_type == "RESPONSE_SEARCH_EQUIPMENT":
         post_message(message["channel"],
-                     f"{random.choice(loading_messages)['quote']}")
+                     f"{generate_random_fortune()}")
         time.sleep(0.5)
 
     logger.info(f"Sending {response.response_type} response to slack.")
@@ -54,6 +50,13 @@ def handle_mention(event_data):
                              message.get("text"))
     response = message_handler.respond_to(message)
     logger.info(f"Sending {response.response_type} response to slack.")
+
+    if response.response_type in ["RESPONSE_FORTUNE", "RESPONSE_GREETING",
+                                  "RESPONSE_HELP"]:
+        post_message(message["channel"], response.text,
+                     attachments=response.attachments)
+        return
+
     post_ephemeral_message(message["channel"], message["user"], response.text,
                            attachments=response.attachments)
 
@@ -110,7 +113,7 @@ def post_ephemeral_message(channel, user, message, attachments=None):
     :param message: message text to send
     :param attachments: message attachments
     :returns: response from slack api see \
-    https://api.slack.com/methods/chat.postMessage
+    https://api.slack.com/methods/chat.postEphemeral
     """
     slack_response = slack_client.api_call("chat.postEphemeral",
                                            channel=channel,
