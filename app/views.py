@@ -81,8 +81,8 @@ def handle_interactive_message():
 
         slack_response = post_message(owner, msg)
         if slack_response["ok"]:
-            return f":green_heart: Thanks! We let <@{owner} know you have"\
-                f" their {equipment['type']}>"
+            return f":green_heart: Thanks! We let {equipment['owner_name']} "\
+                f"know you have their {equipment['type']}"
     return ":orange_heart: Oops! "\
         "We were unable to send the message. Something went wrong."
 
