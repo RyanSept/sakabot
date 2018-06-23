@@ -115,7 +115,7 @@ class MessageHandler:
         return Response("OK, what do you need?", "RESPONSE_LOVE")
 
     def gratitude_reply(self, message):
-        return Response("No problemo", "RESPONSE_GRATITUDE")
+        return Response("No problemo :grin:", "RESPONSE_GRATITUDE")
 
     def help_reply(self, message):
         text = "Hello :wave:. I can help you find owner information for"\

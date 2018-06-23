@@ -1,4 +1,5 @@
 import random
+import json
 
 
 def generate_random_hex_color():
@@ -22,6 +23,7 @@ def build_search_equipment_attachment(equipment, equipment_type,
     # equipment_type is in canonical form (plural)
     # so we get everything up to the last letter
     equipment_type = equipment_type[:-1]
+    equipment["type"] = equipment_type
     attachment = {
         "text": f"{equipment['owner_name']}'s {equipment_type}",
         "fallback": f"Equipment ID - {equipment['equipment_id']} | Owner - {equipment['owner_name']}",
@@ -47,7 +49,7 @@ def build_search_equipment_attachment(equipment, equipment_type,
                         "name": "notify_owner",
                         "text": "Notify the owner you have their equipment",
                         "type": "button",
-                        "value": equipment,
+                        "value": json.dumps(equipment),
                         "confirm": {
                             "title": "Are you sure?",
                             "text": f"Clicking 'Yes' will send a message to "
